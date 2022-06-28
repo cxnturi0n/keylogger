@@ -1,3 +1,4 @@
 1) Develop findKeyboardEventsFile()
 2) Add LOG Logic 
 3) Develop simple Server with keyboard-event parsing logic
+4) Ensure that only a daemon is executing (Otherwise read from keyboard buffer could be inconsistent)
