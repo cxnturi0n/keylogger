@@ -1,6 +1,11 @@
 #ifndef DAEMON
 #define DAEMON
 
-int daemonize();
+#define LOCKFILE "/var/run/keylogger-daemon.pid"
+#define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+
+int daemonize(char * name);
+int lockfile(int lock_file);
+int daemonAlreadyRunning();
 
 #endif
