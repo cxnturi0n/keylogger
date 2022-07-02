@@ -6,6 +6,6 @@
 
 int daemonize(char * name);
 int lockfile(int lock_file);
-int daemonAlreadyRunning();
+int daemonAlreadyRunning(int * lock_file);
 
 #endif

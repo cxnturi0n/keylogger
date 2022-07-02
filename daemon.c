@@ -59,12 +59,11 @@ int lockfile(int fd) // Simple lock file
     return (fcntl(fd, F_SETLK, &fl));
 }
 
-int daemonAlreadyRunning()
+int daemonAlreadyRunning(int *lock_file)
 {
-    int fd;
     char buf[16];
-    fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE); // Opening lock file
-    if (fd < 0)                                      // If open went wrong
+    int fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE); // Opening lock file
+    if (fd < 0)                                          // If open went wrong
         syslog(LOG_ERR, "Couldn't open %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
     if (lockfile(fd) < 0) // If lockfile went wrong
     {
@@ -81,5 +80,6 @@ int daemonAlreadyRunning()
     ftruncate(fd, 0);
     sprintf(buf, "%ld", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
-    return fd;
+    *lock_file = fd;
+    return 0;
 }

