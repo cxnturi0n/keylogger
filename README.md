@@ -54,10 +54,14 @@ Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0</code> or <code>./d
 <H3 id="Idea"> General idea </H3>
 First of all, you have to specify where to send the events, to a server or locally in a regular file, and you also have to choose between allowing multiple instances of the daemon run simultaneously (for example, you may want to send events to multiple servers) or having just one copy of the daemon running. However, i added this option just for practice rather than for a particular useful purpose :stuck_out_tongue_closed_eyes:. If the daemon is single instance, before starting the keylogger module, we have to check if another copy of this daemon is already running, in such case the program simply exits. The program consists of parts:
 <ol>
-  <li>Daemonize process: In this phase, the process is converted into a daemon, which is a process that doesn't have a controlling terminal, for this reason they run in the background. </li>
-  <li>Guarantee single instance: If you specified to have the daemon as single instance, we have to assure that another copy is not already running, in that case we can acquire the lock of a particular file and have only a single instance run</li>
-  <li>Find keyboard device:  
+  <li>Daemonize process: In this phase, the process is converted into a daemon, which is a process that doesn't have a controlling terminal, for this reason it runs in the background. </li>
+  <li>Guarantee single instance: If you specified to have a single instance daemon, the program has to assure that another copy is not already running, in that case a lock of a particular file is obtained.</li>
+  <li>Find keyboard device: It looks for the keyboard device driver into <b>/dev/input/</b>.</li>
+  <li>Open connection or file: If you choose to send events to a server, a connection with it must be established, if you choose to save events locally, the file has to be opened. </li>
+  <li>Keylogging: Reads events from the keyboard device driver and sends them to server or file </li>
+</ol>
+
+  
     
      
 
-If you choose to send events to a server, a connection with it must be established, if you choose to save events locally, the file has to be opened. 
