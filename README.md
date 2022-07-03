@@ -134,6 +134,10 @@ As you can see, a single key press has generated six input events. Let us take a
 <li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li>
 <li>The other three events generated are almost the same to the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".</li>
 
+In my program, there will only be sent key press events, so, events whose type = EV_KEY and value = 1.
+
+
+
 
 
 
