@@ -132,9 +132,8 @@ As you can see, a single key press has generated six input events. Let us take a
 <li>Type = 4 indicates an EV_MSC event, which according to the documentation is used to describe miscellaneous input data that do not fit into other types. From what my understanding is, it returns in the "value" field the device specific scan code, so, we are not really interested in it, because we could get wrong key codes if user remaps the keys. It is not completely useless though, it could be used to recognize which specific physical buttons are being pressed.</li>
 <li>This is the event we are mostly interested in. It has type = EV_KEY, which tells us that a key has either been pressed, released or repeated,  value = 1 tells us that a key has been pressed and code = "30" represents the KEY_A key, which is in fact the key i pressed.</li>
 <li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li>
-<li>The other three events generated are almost the same to the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".</li>
-
-In my program, there will only be sent key press events, so, events whose type = EV_KEY and value = 1.
+<li>The other three events generated are almost the same to the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".</li><br>
+<em>In my program, only key press events will be captured, so, events whose type = EV_KEY and value = 1.</em>
 
 
 
