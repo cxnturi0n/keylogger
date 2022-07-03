@@ -62,7 +62,7 @@ First of all, you have to specify where to send the events, to a server or local
 
 <H3 id="Finding"> Finding keyboard device </H3>
 The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). At this point we know where our keyboard character device can be found, but how can we know if a character device is actually a keyboard one? Well, we can use the event API, which will allow us to query the capabilities and characteristics of input character devices.
-<code>
+  ```c
   if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) /* Getting bit events supported by device */
     {
         if ((events_bitmask & EV_KEY) == EV_KEY) /* If EV_KEY bit is set then it could be a Keyboard, 
@@ -76,7 +76,7 @@ The event interface exposes the raw events to userspace through a collection of 
                 }
         }
     }
-</code>
+  ```
   
     
      
