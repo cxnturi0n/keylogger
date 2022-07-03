@@ -19,7 +19,15 @@
         <li><a href="#Signals">Signals handling</a></li>
       </ul>
     <li><a href="#Daemon">Daemon process</a></li>
+      <ul>
+        <li>Daemonize phase</li>
+        <li>Single instance daemon and file locking</li>
+      </ul>
     <li><a href="#Server">Server</a></li>
+      <ul>
+        <li>IO/Multiplexing</li>
+        <li>Logging session example</li>
+      </ul>
   </ul>
   <li><a href="#References">References</a></li>
   <li><a href="#Disclaimer">Disclaimer</a></li>
@@ -163,4 +171,4 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 </ul>
   
 <H2 id="Disclaimer"> Disclaimer </H2>
-I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the operating systems class. You shall not run this program machines where you don't have permissions to log key presses.
+I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the operating systems class. You shall not run this program on machines where you don't have permissions to log key presses.
