@@ -36,7 +36,7 @@ In order to compile the program, run this command: <code>gcc main.c keylogger.c 
 You can invoke the executable in two possible ways:
 <ul>
   <li>&lt<b>executable_path</b>&gt &lt<b>host</b>&gt &lt<b>port</b>&gt &lt<b>is_single_instance</b>&gt</li>
-  <li>&lt<b>executable_path</b>&gt &lt<b>file_out</b>&gt &lt<b>is_single_instance</b>&gt</li>
+  <li>&lt<b>executable_path</b>&gt &lt<b>file_path</b>&gt &lt<b>is_single_instance</b>&gt</li>
 </ul>
 Where:
 <ul>
@@ -61,7 +61,7 @@ First of all, you have to specify where to send the events, to a server or local
 </ol>
 
 <H3 id="Finding"> Finding keyboard device </H3>
-
+The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). At this point we know where our keyboard character device can be found, but how can we know if a character device is actually a keyboard one? Well, we can use the event API, which will allow us to query the capabilities and characteristics of input character devices.
   
     
      
