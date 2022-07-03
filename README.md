@@ -163,4 +163,4 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 </ul>
   
 <H2 id="Disclaimer"> Disclaimer </H2>
-I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the Operating system class. You shall not use this program on a machine where you don't have permissions to log key presses.
+I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the operating systems class. You shall not run this program machines where you don't have permissions to log key presses.
