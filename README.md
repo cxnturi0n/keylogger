@@ -135,8 +135,13 @@ As you can see, a single key press has generated six input events. Let us take a
 <li>The other three events generated are almost the same to the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".</li><br>
 <em>In my program, only key press events will be captured, so, events whose type = EV_KEY and value = 1.</em>
 
+<H4 id="Signals">Signals handling</H4>
+As soon as the process is daemonized, all signals are blocked. According to the file you choose to send the events to, particular signals will be unblocked. They will allow us to terminate the daemon safely(recall that daemon processes do not have controlling terminal, so the user cannot send, for example, SIGINT via CTRL-C).
+<ul>
+<li>If you choose to send events to a server, then SIGPIPE is unblocked. If the server closed the connection and the daemon tries to send bytes to the server, the send system call will be interrupted by SIGPIPE and will fail, setting errno to EPIPE, this because an RST packet is received from the server, that is telling the program that it is not interested in receiving bytes.</li>
+<li>If you choose to save events locally, then SIGTERM is unblocked. I choose SIGTERM just because it is the default signal sent by the kill command.</li>
 
-
+<em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1. As soon as the handler function returns, the keylogger stops, resources are freed and daemon is safely terminated.
 
 
 
