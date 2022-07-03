@@ -15,7 +15,7 @@
       <ul>
         <li><a href="#Idea">General idea</a></li>
         <li><a href="#Finding">Finding keyboard device</a></li>
-        <li><a href="#Sending">Sending events</a></li>
+        <li><a href="#Reading">Reading events</a></li>
         <li><a href="#Signals">Signals handling</a></li>
       </ul>
     <li><a href="#Daemon">Daemon process</a></li>
@@ -70,7 +70,7 @@ First of all, you have to specify where to send the events, to a server or local
 <H4 id="Finding"> Finding keyboard device </H4>
 The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). Those device files can be found into <b>/dev/input/</b>.
 
-The function <code>int findKeyboardDevice(char *dir_path)</code> has the task of exploring devices and subdirectories(by calling itself recursively if current file is a directory) and returns the first keyboard device it finds, if any. How do we actually check if a character device is actually a keyboard one? We can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input device.
+The function <code>int findKeyboardDevice(char \*dir_path)</code> has the task of exploring devices and subdirectories(by calling itself recursively if current file is a directory) and returns the first keyboard device it finds, if any. How do we actually check if a character device is actually a keyboard one? We can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input device.
 Take a look at a function that uses the linux event API to check whether or not an input device is a keyboard device:
 
 ```c
@@ -109,4 +109,30 @@ The first ioctl call allows us to get the event bits, that is, a bitmask express
 If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
 However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9", if yes, we can almost be sure that it is a keyboard device.
 
-<H4 id="Sending"> Sending events </H4>
+<H4 id="Reading"> Reading events </H4>
+Retrieving events from a device requires a standard character device “read" function. Each time you read from an event device you will get a number of events. Every event consists of a struct input_event. If you wish to know more about input_event fields, give a look at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
+
+```c
+
+struct input_event {
+      struct timeval time;
+      unsigned short type;
+      unsigned short code;
+      unsigned int value; 
+      };
+
+```
+
+When trying to read for the keyboard device you may not get exactly what you would expect, that is, a unique event containing the code of the key you have just pressed. This happens because, generally, a single hardware event is mapped into multiple "software" input events. This is what happens if i try to read from the keyboard device after pressing the letter "a":
+
+![image](https://user-images.githubusercontent.com/75443422/177054820-ff481134-024d-46e1-ba5c-0a404d88f2ac.png)
+
+Let us take a look at those events events:
+
+
+
+
+
+
+
+
