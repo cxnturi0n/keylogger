@@ -20,13 +20,13 @@
       </ul>
     <li><a href="#Daemon">Daemon process</a></li>
       <ul>
-        <li>Daemonize phase</li>
-        <li>Single instance daemon and file locking</li>
+        <li <a href="#Daemonize">Daemonize phase</a></li>
+        <li <a href="#Single">Single instance daemon and file locking</a></li>
       </ul>
     <li><a href="#Server">Server</a></li>
       <ul>
-        <li>IO/Multiplexing</li>
-        <li>Logging session example</li>
+         <li><a href="#IO">IO/Multiplexing with poll()</a></li>
+         <li><a href="#Logging">Logging keyboard events session example</a></li>
       </ul>
   </ul>
   <li><a href="#References">References</a></li>
