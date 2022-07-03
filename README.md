@@ -55,8 +55,10 @@ Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0</code> or <code>./d
 
 <H2 id="How"> How does it work? </H2>
 
-<H3 id="Idea"> General idea </H3>
-First of all, you have to specify where to send the events, to a server or locally in a regular file, and you also have to choose between allowing multiple instances of the daemon run simultaneously (for example, you may want to send events to multiple servers) or having just one copy of the daemon running. However, i added this option just for practice rather than for a particular useful purpose :stuck_out_tongue_closed_eyes:. If the daemon is single instance, before starting the keylogger module, we have to check if another copy of this daemon is already running, in such case the program simply exits. The program consists of 5 main parts:
+<H3 id="Keylogger"> Keylogger </H3>
+
+<H4 id="Idea"> General idea </H4>
+First of all, you have to specify where to send the events, to a server or locally in a regular file, and you also have to choose between allowing multiple instances of the daemon run simultaneously (for example, you may want to send events to multiple servers) or having just one copy of the daemon running. However, i added this option just for practice rather than for a particular useful purpose :stuck_out_tongue_closed_eyes:. If the daemon is single instance, before starting the keylogger module, we have to check if another copy of this daemon is already running, in such case the program simply exits. After that, the keyboard device driver is looked for, the socket or the file is opened and the keylogging phase begins. The program consists of 5 main parts:
 <ol>
   <li>Daemonize process: In this phase, the process is converted into a daemon, which is a process that doesn't have a controlling terminal, for this reason it runs in the background. </li>
   <li>Guarantee single instance: If you specified to have a single instance daemon, the program has to assure that another copy is not already running, in that case a lock of a particular file is obtained.</li>
@@ -65,7 +67,7 @@ First of all, you have to specify where to send the events, to a server or local
   <li>Keylog: Reads keypress events from the keyboard device driver and sends them to server or file. </li>
 </ol>
 
-<H3 id="Finding"> Finding keyboard device </H3>
+<H4 id="Finding"> Finding keyboard device </H4>
 The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). Those device files can be found into <b>/dev/input/</b>.
 
 The function <code>int findKeyboardDevice(char *dir_path)</code> has the task of exploring devices and subdirectories(by calling itself recursively if current file is a directory) and returns the first keyboard device it finds, if any. How do we actually check if a character device is actually a keyboard one? We can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input device.
@@ -106,3 +108,5 @@ int isKeyboardDevice(char *path, int *keyboard_device)
 The first ioctl call allows us to get the event bits, that is, a bitmask expressing all of the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it a mouse.
 If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
 However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9", if yes, we can almost be sure that it is a keyboard device.
+
+<H4 id="Sending"> Sending events </H4>
