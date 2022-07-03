@@ -146,7 +146,7 @@ As soon as the process is daemonized, all signals are blocked. According to the 
     <li>It SIGTERM is received when daemon is writing on file and at least a byte was written, write() returns the number of bytes written. The handler has, however, set       the STOP_KEYLOGGER flag to 1, so as soon as the write writes all the remaining events into the file, the loop of the keylogger will be interrupted</li>
   </ul>
 
-<em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1. As soon as the handler function returns, the keylogger stops, resources are freed and daemon is safely terminated.
+<em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
 
 
 
