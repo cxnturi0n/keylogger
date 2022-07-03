@@ -138,8 +138,13 @@ As you can see, a single key press has generated six input events. Let us take a
 <H4 id="Signals">Signals handling</H4>
 As soon as the process is daemonized, all signals are blocked. According to the file you choose to send the events to, particular signals will be unblocked. They will allow us to terminate the daemon safely(recall that daemon processes do not have controlling terminal, so the user cannot send, for example, SIGINT via CTRL-C).
 <ul>
-<li>If you choose to send events to a server, then SIGPIPE is unblocked. If the server closed the connection and the daemon tries to send bytes to the server, the send system call will be interrupted by SIGPIPE and will fail, setting errno to EPIPE, this because an RST packet is received from the server, that is telling the program that it is not interested in receiving bytes.</li>
-<li>If you choose to save events locally, then SIGTERM is unblocked. I choose SIGTERM just because it is the default signal sent by the kill command.</li>
+<li>If you choose to send events to a server, then SIGPIPE is unblocked. If the server closed the connection and the daemon tries to send bytes to the server, the send() system call will be interrupted by SIGPIPE and will fail, setting errno to EPIPE, this happens because an RST packet is received from the server, that is telling the program that it is not interested in receiving any more bytes.</li>
+<li>If you choose to save events locally, then SIGTERM is unblocked. I choose SIGTERM just because it is the default signal sent by the kill command.
+  <ul>
+    <li>If SIGTERM is received when daemon is blocked on the read system call, read() fails with EINTR set as errno.</li>
+    <li>It SIGTERM is received when daemon is writing on file and no bytes were written, write() fails with EINTR set a as errno.</li>
+    <li>It SIGTERM is received when daemon is writing on file and at least a byte was written, write() returns the number of bytes written. The handler has, however, set       the STOP_KEYLOGGER flag to 1, so as soon as the write writes all the remaining events into the file, the loop of the keylogger will be interrupted</li>
+  </ul>
 
 <em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1. As soon as the handler function returns, the keylogger stops, resources are freed and daemon is safely terminated.
 
