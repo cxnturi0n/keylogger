@@ -161,5 +161,6 @@ As soon as the process is daemonized, all signals are blocked. According to the 
     <li>https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h</li>
   </ul>
 </ul>
-
-
+  
+<H2 id="Disclaimer"> Disclaimer </H2>
+I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the Operating system class. You shall not use this program on a machine where you don't have permissions to log key presses.
