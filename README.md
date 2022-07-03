@@ -20,7 +20,7 @@
       </ul>
     <li><a href="#Daemon">Daemon process</a></li>
       <ul>
-        <li><a href="#Daemonize">Daemonize phase</a></li>
+        <li><a href="#Daemonize">Daemonizing phase</a></li>
         <li><a href="#Single">Single instance daemon and file locking</a></li>
       </ul>
     <li><a href="#Server">Server</a></li>
