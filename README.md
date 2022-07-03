@@ -150,6 +150,16 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 
 
 
-
+<H2 id="References"> References </H2>
+<ul>
+<li>About system calls, signals, daemon processes and other C programming stuff: https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739</li>
+<li>About Linux input subsystem:
+  <ul>
+    <li>https://www.linuxjournal.com/article/6429</li>
+    <li>https://www.linuxjournal.com/article/1080</li>
+    <li>https://www.kernel.org/doc/Documentation/input/event-codes.txt</li>
+    <li>https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h</li>
+  </ul>
+</ul>
 
 
