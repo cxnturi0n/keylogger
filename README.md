@@ -66,12 +66,12 @@ First of all, you have to specify where to send the events, to a server or local
 </ol>
 
 <H3 id="Finding"> Finding keyboard device </H3>
-The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). At this point we know where our keyboard character device can be found, but how can we know if a character device is actually a keyboard one? Well, we can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input character device.
-Take a look at a function that checks if file is a keyboard device:
+The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). Those device files can be found into <b>/dev/input/</b>.
 
+The function <code>int findKeyboardDevice(char *dir_path)</code> has the task of exploring devices and subdirectories(by calling itself recursively if current file is a directory) and returns the first keyboard device it finds, if any. How do we actually check if a character device is actually a keyboard one? We can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input device.
+Take a look at a function that uses the linux event API to check whether or not an input device is a keyboard device:
 
-   ```
-   
+```c
    
 int isKeyboardDevice(char *path, int *keyboard_device)
 {
@@ -100,9 +100,9 @@ int isKeyboardDevice(char *path, int *keyboard_device)
     close(fd);
     return 0;
 }
-    
-      ```
-      
-The first ioctl call allows us to get the event bits, that is, a bitmask expressing all the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it a mouse.
+
+```
+
+The first ioctl call allows us to get the event bits, that is, a bitmask expressing all of the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it a mouse.
 If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
-However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9".
+However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9", if yes, we can almost be sure that it is a keyboard device.
