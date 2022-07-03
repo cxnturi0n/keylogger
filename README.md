@@ -67,8 +67,11 @@ First of all, you have to specify where to send the events, to a server or local
 
 <H3 id="Finding"> Finding keyboard device </H3>
 The event interface exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). At this point we know where our keyboard character device can be found, but how can we know if a character device is actually a keyboard one? Well, we can use the event API (EVIOC* functions), which will allow us to query the capabilities and characteristics of an input character device.
+Take a look at a function that checks if file is a keyboard device:
+
 
    ```
+   
    
 int isKeyboardDevice(char *path, int *keyboard_device)
 {
@@ -99,6 +102,7 @@ int isKeyboardDevice(char *path, int *keyboard_device)
 }
     
       ```
+      
 The first ioctl call allows us to get the event bits, that is, a bitmask expressing all the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it a mouse.
 If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
 However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9".
