@@ -127,8 +127,12 @@ When trying to read for the keyboard device you may not get exactly what you wou
 
 ![image](https://user-images.githubusercontent.com/75443422/177054820-ff481134-024d-46e1-ba5c-0a404d88f2ac.png)
 
-Let us take a look at those events events:
-
+Let us take a look at each of those events events:
+<ol>
+<li>Type = 4 indicates an EV_MSC event, which according to the documentation is used to describe miscellaneous input data that do not fit into other types. From what my understanding is, it returns in the "value" field the device specific scan code, so, we are not really interested in it, because we could get wrong key codes if user remaps the keys. It is not completely useless though, it could be used to recognize which specific physical buttons are being pressed</li>
+<li>This is the event we are mostly interested in. It has type = EV_KEY, which tells us that a key has either been pressed, released or repeated,  value = 1 tells us that a key has been pressed and code = "30" represents the KEY_A key, which is in fact the key i pressed.</li>
+<li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li>
+<li>The other three events generated are almost the same to the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".</li>
 
 
 
