@@ -11,11 +11,13 @@
   </ul>
   <li><a href="#How">How does it work?</a></li>
   <ul>
-    <li><a href="#Description">Description</a></li>
     <li><a href="#Keylogger">Keylogger</a></li>
       <ul>
-        <li><a href="#Logic">Logic</a></li>
-        <li><a href="#Device">Finding keyboard device</a></li>
+        <li><a href="Idea#">General idea</a></li>
+        <li><a href="#Socket">Socket or regular file</a></li>
+        <li><a href="#Finding">Finding keyboard device</a></li>
+        <li><a href="#Sending">Sending events</a></li>
+        <li><a href="#Signals">Signals handling</a></li>
       </ul>
     <li><a href="#Daemon">Daemon process</a></li>
     <li><a href="#Server">Server</a></li>
