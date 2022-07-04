@@ -114,9 +114,9 @@ int isKeyboardDevice(char *path, int *keyboard_device)
 
 ```
 
-The first ioctl call allows us to get the event bits, that is, a bitmask expressing all of the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it a mouse.
+The first ioctl call allows us to get the event bits, that is, a bitmask expressing all of the capabilities or features supported by the device, it can tell us if, for example, the device has keys or buttons or if it is a mouse.
 If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
-However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to get to know if the device supports "q", "a", "z", "1" and "9", if so, we can almost be sure that it is a keyboard device.
+However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to know if the device supports "q", "a", "z", "1" and "9", if so, we can almost be sure that it is a keyboard device.
 
 <H4 id="Reading"> Reading events </H4>
 Retrieving events from a device requires a standard character device “read" function. Each time you read from an event device you will get a number of events. Every event consists of a struct input_event. If you wish to know more about input_event fields, give a look at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
@@ -132,14 +132,14 @@ struct input_event {
 
 ```
 
-When trying to read from the keyboard device you may not get exactly what you would expect, that is, a unique event containing the code of the key you have just pressed. This happens because, generally, a single hardware event is mapped into multiple "software" input events. This is what happens if i try to read from the keyboard device after pressing the letter "a":
+When trying to read from the keyboard device you may not get exactly what you would expect, that is, a unique event containing the code of the key you have just pressed. This happens because, generally, a single hardware event is mapped into multiple "software" input events. This is what happens if I try to read from the keyboard device after pressing the letter "a":
 
 ![image](https://user-images.githubusercontent.com/75443422/177127789-686ff558-e1cc-4a9d-85b2-ea77ba325387.png)
 
 As you can see, a single key press has generated six input events. Let us take a look at each of those events:
 <ol>
 <li>Type = 4 indicates an EV_MSC event, which according to the documentation is used to describe miscellaneous input data that do not fit into other types. From what my understanding is, it returns in the "value" field the device specific scan code, so, we are not really interested in it, because we could get wrong key codes if user remaps the keys. It is not completely useless though, it could be used to recognize which specific physical buttons are being pressed.</li>
-<li>This is the event we are mostly interested in. It has type = EV_KEY, which tells us that a key has either been pressed, released or repeated,  value = 1 tells us that a key has been pressed and code = "30" represents the KEY_A key, which is in fact the key i pressed.</li>
+<li>This is the event we are mostly interested in. It has type = EV_KEY, which tells us that a key has either been pressed, released or repeated,  value = 1 tells us that a key has been pressed and code = "30" represents the KEY_A key, which is in fact the key I pressed.</li>
 <li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li><br>
 <//ol>
 The other three events generated are almost the same as the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".<br>
@@ -159,9 +159,9 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 <em>Both signals share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
 
 <H3 id="Daemon"> Daemon process </H3>
-I thought that it would be nice having the keylogger running in background under not the direct control of the user. For this reason i choose to implement the program as a daemon process.
+I thought that it would be nice having the keylogger running in background under not the direct control of the user. For this reason I choose to implement the program as a daemon process.
 <H4 id="Daemonize">Daemonizing phase </H4>
-In this phase, the process is converted to a daemon. The code i used is a slight variation of the code from the "Advanced programming in the Unix Environment 3rd edition" book, provided in the "Daemon Processes" section. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
+In this phase, the process is converted to a daemon. The code I used is a slight variation of the code from the "Advanced programming in the Unix Environment 3rd edition" book, provided in the "Daemon Processes" section. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
 
 ```c
 
@@ -282,4 +282,4 @@ Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Ke
 </ul>
 
 <H2 id="Disclaimer"> Disclaimer </H2>
-I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the operating systems class. You shall not run this program on machines where you don't have permissions to log key presses.
+I have developed this program just to learn about the linux input subsystem and to put in practice notions I have acquired during the operating systems class. You shall not run this program on machines where you don't have permissions to log key presses.
