@@ -59,7 +59,7 @@ Where:
   <li><b>file_path</b>: path of the regular file you want to store events into</li> 
   <li><b>is_single_instance</b>: 1 if you only want an instance of the daemon running at a time, 0 otherwise</li>
 </ul>
-Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0 1</code> or <code>./daemon-keylogger file_out.txt 1 1</code>.
+Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0</code> or <code>./daemon-keylogger file_out.txt 1</code>.
 
 
 <H2 id="How"> How does it work? </H2>
