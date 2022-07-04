@@ -166,16 +166,16 @@ Daemon processes do not own a controlling terminal, so we cannot log error or in
 <H3 id="Server"> Server </H3>
 It is a simple server which logs keypress events, to its standard output. It is main threaded because this server is not meant to serve a large amount of clients, but just to listen for keyboard events from a few clients.
 
-<H3 id="IO"> IO/Multiplexing with poll() </H3>
+<H4 id="IO"> IO/Multiplexing with poll() </H4>
 
 Read operations could block indefinitely, for example when the user on the client side is not pressing any keys for a long time. This behaviour would make our main thread block, thus resulting in not being able to accept new clients. For this reason, we mark the sockets to be non-blocking. In addition to that, we use the poll system call that allows the thread to be notified by the kernel whenever particular events occurr(socket readable, in our case). As soon as we read everything, the read will not block but will, instead, fail and errno is set to EWOULDBLOCK/EAGAIN, allowing the main thread to regain control. 
 
-<H3 id="Logging"> Logging events session example </H3>
+<H4 id="Logging"> Logging events session example </H4>
+Let us look at an example of server receiving events from two clients:
 
+  
 
-
-
-
+  
 <H2 id="References"> References </H2>
 <ul>
 <li>About system calls, signals, daemon processes and other C programming stuff: https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739</li>
