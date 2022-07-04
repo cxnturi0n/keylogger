@@ -70,7 +70,7 @@ Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0 1</code> or <code>.
 First of all, you have to specify where to send the events, to a server or locally in a regular file, and you also have to choose between allowing multiple instances of the daemon to run simultaneously (for example, you may want to send events to multiple servers) or having just one copy of the daemon running. However, i added this option just for practice rather than for a particular useful purpose :stuck_out_tongue_closed_eyes:. If the daemon is single instance, before starting the keylogger module, we have to check if another copy of this daemon is already running, in such case the program simply exits. After that, the keyboard device driver is looked for, the socket or the file is opened and the keylogging phase begins. The program consists of 5 main parts:
 <ol>
   <li><b>Daemonize process</b>: In this phase, the process is converted into a daemon, which is a process that doesn't have a controlling terminal, for this reason it runs in the background. </li>
-  <li><b>Guarantee single instance</b>: If you specified to have a single instance daemon, the program has to assure that another copy is not already running, in that case a lock of a particular file is obtained.</li>
+  <li><b>Guarantee single instance</b>: If you specified to have a single instance daemon, the program has to assure that another copy is not already running, in that case a write lock on a particular file is obtained.</li>
   <li><b>Find keyboard device driver</b>: It looks for the keyboard device driver into <b>/dev/input/</b>.</li>
   <li><b>Open connection or file</b>: If you choose to send events to a server, a connection with it must be established, if you choose to save events locally, the file has to be opened. </li>
   <li><b>Keylog</b>: Reads keypress events from the keyboard device driver and sends them to server or file. </li>
@@ -156,12 +156,12 @@ As soon as the process is daemonized, all signals are blocked. According to the 
     <li>It SIGTERM is received when daemon is writing on file and at least a byte was written, write() returns the number of bytes written. The handler has, however, set       the STOP_KEYLOGGER flag to 1, so as soon as the write writes all the remaining events into the file, the loop of the keylogger will be interrupted</li>
   </ul>
 
-<em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
+<em>Both signals share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
 
 <H3 id="Daemon"> Daemon process </H3>
 I thought that it would be nice having the keylogger running in background under not the direct control of the user. For this reason i choose to implement the program as a daemon process.
 <H4 id="Daemonize">Daemonizing phase </H4>
-In this phase, the process is converted to a daemon. The code i used is a slight variation of the code from "Advanced programming in the Unix Environment 3rd edition" in the "Daemon Processes" section. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
+In this phase, the process is converted to a daemon. The code i used is a slight variation of the code from the "Advanced programming in the Unix Environment 3rd edition" book, provided in the "Daemon Processes" section. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
 
 ```c
 
@@ -211,11 +211,11 @@ int daemonize(char *name)
 ```
 
 <H4 id="Single">Single instance daemon and file locking</H4>
-User can decide to run the process as a single instance daemon. To ensure that only a copy of the daemon runs at a time, the daemon itself creates a file with a fixed name (in our case, "keylogger-daemon.pid") and places a write lock on the entire file, and also writes its pid in it. If other processes want to acquire a write lock on that particular file, they will fail in the intent because another daemon already owns the lock, that is, another instance of the same daemon is already running. This is the function that checks whether or not another instance is already running:
+User can decide to run the process as a single instance daemon. To ensure that only a copy of the daemon runs at a time, the daemon itself creates a file with a fixed name (in our case, "keylogger-daemon.pid") and places a write lock on the entire file, and also writes its pid in it. If other processes want to acquire a write lock on that particular file, they will fail in the intent because another daemon already owns the lock, that is, another instance of the same daemon is already running. This is the function that checks whether or not another instance is already running, if it is not the case, it returns the locked file:
   
 ```c
   
-int daemonAlreadyRunning(int *lock_file)
+int daemonAlreadyRunning(int *locked_file)
 {
     char buf[16];
     int fd;
@@ -236,12 +236,12 @@ int daemonAlreadyRunning(int *lock_file)
         }
         syslog(LOG_ERR, "Can’t lock %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
     }
-    /* If Daemon acquired lock, writes its pid into the lock file */
+    /* If Daemon acquired lock, writes its pid into the locked file */
     syslog(LOG_INFO, "Daemon successfully acquired lock, pid can be read into: %s", LOCKFILE);
     ftruncate(fd, 0);
     sprintf(buf, "%ld", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
-    *lock_file = fd;
+    *locked_file = fd;
     return 0;
 }
 
@@ -249,7 +249,7 @@ int daemonAlreadyRunning(int *lock_file)
   
 <H3 id="Log"> Syslog </H3>
 Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. 
-Here is what happens if we <code>run tail -f /var/log/syslog</code>:
+Here is what happens if we <code>run tail -f /var/log/syslog</code> after running the daemon:
 
 ![image](https://user-images.githubusercontent.com/75443422/177107453-424f5ff0-412c-4a15-9735-8c77f73e26bb.png)
 
@@ -259,7 +259,7 @@ It is a simple server which logs keypress events, to its standard output. It is 
 
 <H4 id="IO"> IO/Multiplexing with poll() </H4>
 
-Read operations could block indefinitely, for example when the user on the client side is not pressing any keys for a long time. This behaviour would make our main thread block, thus resulting in not being able to accept new clients. For this reason, we mark the sockets to be non-blocking. In addition to that, we use the poll system call that allows the thread to be notified by the kernel whenever particular events occurr(socket readable, in our case). As soon as we read everything, the read will not block but will, instead, fail and errno is set to EWOULDBLOCK/EAGAIN, allowing the main thread to regain control. 
+Read operations could block indefinitely, for example when the user on the client side is not pressing any keys for a long time. This behaviour would make our main thread block, thus resulting in not being able to accept new clients. For this reason, we mark the sockets to be non-blocking. In addition to that, we use the poll system call that allows the thread to be notified by the kernel whenever particular events occurr(socket readable, in our case). As soon as we read everything, the read will not block but will, instead, fail and errno will be set to EWOULDBLOCK/EAGAIN, allowing the main thread to regain control. 
 
 <H4 id="Logging"> Logging events session example </H4>
 Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Key: &ltKEY&gt"</b>.Let us look at an example of server receiving events from two clients:
