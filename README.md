@@ -277,6 +277,7 @@ Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Ke
     <li>https://www.kernel.org/doc/Documentation/input/event-codes.txt</li>
     <li>https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h</li>
   </ul>
+  <li>About poll system call: https://www.ibm.com/docs/en/i/7.2?topic=designs-using-poll-instead-select</li>
 </ul>
 
 <H2 id="Disclaimer"> Disclaimer </H2>
