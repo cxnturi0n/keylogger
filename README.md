@@ -134,7 +134,7 @@ struct input_event {
 
 When trying to read from the keyboard device you may not get exactly what you would expect, that is, a unique event containing the code of the key you have just pressed. This happens because, generally, a single hardware event is mapped into multiple "software" input events. This is what happens if i try to read from the keyboard device after pressing the letter "a":
 
-![image](https://user-images.githubusercontent.com/75443422/177054820-ff481134-024d-46e1-ba5c-0a404d88f2ac.png)
+![image](https://user-images.githubusercontent.com/75443422/177127789-686ff558-e1cc-4a9d-85b2-ea77ba325387.png)
 
 As you can see, a single key press has generated six input events. Let us take a look at each of those events:
 <ol>
@@ -158,7 +158,8 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 <em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
 
 <H3 id="Log"> Syslog </H3>
-Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. Here is an example of its content during an execution of the keylogger:
+Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. 
+Here is what happens if we <code>run tail -f /var/log/syslog</code>:
 
 ![image](https://user-images.githubusercontent.com/75443422/177107453-424f5ff0-412c-4a15-9735-8c77f73e26bb.png)
 
