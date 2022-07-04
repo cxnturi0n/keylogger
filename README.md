@@ -140,8 +140,9 @@ As you can see, a single key press has generated six input events. Let us take a
 <ol>
 <li>Type = 4 indicates an EV_MSC event, which according to the documentation is used to describe miscellaneous input data that do not fit into other types. From what my understanding is, it returns in the "value" field the device specific scan code, so, we are not really interested in it, because we could get wrong key codes if user remaps the keys. It is not completely useless though, it could be used to recognize which specific physical buttons are being pressed.</li>
 <li>This is the event we are mostly interested in. It has type = EV_KEY, which tells us that a key has either been pressed, released or repeated,  value = 1 tells us that a key has been pressed and code = "30" represents the KEY_A key, which is in fact the key i pressed.</li>
-<li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li>
-<li>The other three events generated are almost the same to the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".</li><br>
+<li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li><br>
+<//ol>
+The other three events generated are almost the same as the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".<br>
 <em>In my program, only key press events will be captured, so, events whose type = EV_KEY and value = 1.</em>
 
 <H4 id="Signals">Signals handling</H4>
@@ -158,8 +159,59 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 <em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
 
 <H3 id="Daemon"> Daemon process </H3>
+I thought that it would be nice having the keylogger running in background under not the direct control of the user. For this reason i choose to implement the program as a daemon process.
 <H4 id="Daemonize">Daemonizing phase </H4>
+In this phase, the process is converted to a daemon. The code i used is a slight variation of the code from "Advanced programming in the Unix Environment 3rd edition" in the "Daemon Processes" section. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
+
+```c
+
+int daemonize(char *name)
+{
+    pid_t pid;
+    struct rlimit limit;
+
+    umask(0); /* Resetting process file mode creation mask */
+
+    if (getrlimit(RLIMIT_NOFILE, &limit) < 0) /* Getting max number of file descriptors that process can open. */
+        return -1;
+
+    pid = fork(); /* Parent exits, Child inherits session and process group id of the terminated parent.
+                     Child is now orphane and is attached to init process. */
+
+    if (pid < 0)
+        return -1;
+    if (pid)
+        exit(EXIT_SUCCESS);
+
+    setsid(); /* A new session is created. Child becomes leader of the session and of a new process group,
+                 it is detached from the parent's controlling terminal */
+
+    pid = fork(); /* After the first fork, the process could still be take control of a TTY because it is the session leader!.
+                     This fork will generate a new child which will not be the session leader anymore.
+                     We have successfully fully daemonized our process. */
+
+    if (pid < 0)
+        return -1;
+    if (pid)
+        exit(EXIT_SUCCESS);
+
+    openlog(name, LOG_PID, LOG_USER); /* Pid and name will appear in the syslog */
+
+    /* chdir("/");  Changes the working directory to a safe one. */
+
+    if (limit.rlim_max == RLIM_INFINITY)
+        limit.rlim_max = 1024;
+
+    for (int i = 0; i < limit.rlim_max; i++) /* Closing all file descriptors */
+        close(i);
+
+    return 1;
+}
+
+```
+
 <H4 id="Single">Single instance daemon and file locking</H4>
+If user choose to have have a single instance daemon, 
 
 <H3 id="Log"> Syslog </H3>
 Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. 
@@ -176,7 +228,10 @@ It is a simple server which logs keypress events, to its standard output. It is 
 Read operations could block indefinitely, for example when the user on the client side is not pressing any keys for a long time. This behaviour would make our main thread block, thus resulting in not being able to accept new clients. For this reason, we mark the sockets to be non-blocking. In addition to that, we use the poll system call that allows the thread to be notified by the kernel whenever particular events occurr(socket readable, in our case). As soon as we read everything, the read will not block but will, instead, fail and errno is set to EWOULDBLOCK/EAGAIN, allowing the main thread to regain control. 
 
 <H4 id="Logging"> Logging events session example </H4>
-Let us look at an example of server receiving events from two clients:
+Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Key: &ltKEY&gt"</b>.Let us look at an example of server receiving events from two clients:
+
+![Immagine 2022-07-04 143610](https://user-images.githubusercontent.com/75443422/177156766-00ae779a-043c-41c2-9785-8db215b546f5.png)
+
 
 <H2 id="References"> References </H2>
 <ul>
