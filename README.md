@@ -157,6 +157,10 @@ As soon as the process is daemonized, all signals are blocked. According to the 
 
 <em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
 
+<H3 id="Daemon"> Daemon process </H3>
+<H4 id="Daemonize">Daemonizing phase </H4>
+<H4 id="Single">Single instance daemon and file locking</H4>
+
 <H3 id="Log"> Syslog </H3>
 Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. 
 Here is what happens if we <code>run tail -f /var/log/syslog</code>:
@@ -174,9 +178,6 @@ Read operations could block indefinitely, for example when the user on the clien
 <H4 id="Logging"> Logging events session example </H4>
 Let us look at an example of server receiving events from two clients:
 
-  
-
-  
 <H2 id="References"> References </H2>
 <ul>
 <li>About system calls, signals, daemon processes and other C programming stuff: https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739</li>
@@ -188,6 +189,6 @@ Let us look at an example of server receiving events from two clients:
     <li>https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h</li>
   </ul>
 </ul>
-  
+
 <H2 id="Disclaimer"> Disclaimer </H2>
 I have developed this program just to learn about the linux input subsystem and to put in practice notions i have acquired during the operating systems class. You shall not run this program on machines where you don't have permissions to log key presses.
