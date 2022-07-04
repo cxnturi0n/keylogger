@@ -248,14 +248,14 @@ int daemonAlreadyRunning(int *locked_file)
   ```
   
 <H3 id="Log"> Syslog </H3>
-Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. 
+Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, the syslog(3) function is used to log messages into /var/log/syslog. 
 Here is what happens if we <code>run tail -f /var/log/syslog</code> after running the daemon:
 
 ![image](https://user-images.githubusercontent.com/75443422/177107453-424f5ff0-412c-4a15-9735-8c77f73e26bb.png)
 
 
 <H3 id="Server"> Server </H3>
-It is a simple server which logs keypress events, to its standard output. It is main threaded because this server is not meant to serve a large amount of clients, but just to listen for keyboard events from a few clients.
+It is a simple server which logs keypress events, to its standard output. I choose single threading because this server is not meant to serve a large amount of clients, but just to listen for keyboard events from a few clients.
 
 <H4 id="IO"> IO/Multiplexing with poll() </H4>
 
