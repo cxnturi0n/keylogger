@@ -156,13 +156,12 @@ int isKeyboardDevice(char *path, int *keyboard_device)
     if (fd < 0)
         syslog(LOG_ERR, "Couldn't open %s: %s", path, strerror(errno));
 
-    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) /* Getting bit events supported by device */
+    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) // Getting bit events supported by device
     {
-        if ((events_bitmask & EV_KEY) == EV_KEY) /* If EV_KEY bit is set then it could be a Keyboard, 
-                                                    but it can be a false positive (for example, power button has this bit set but it is not a kbd) */
+        if ((events_bitmask & EV_KEY) == EV_KEY) // If EV_KEY bit is set then it could be a Keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd)
         {
             if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0)
-                if ((keys & keys_bitmask) == keys) /* If it support those keys then good chances are that we just found the keyboard device */
+                if ((keys & keys_bitmask) == keys) // If it support those keys then good chances are that we just found the keyboard device
                 {
                     *keyboard_device = fd;
                     return 1;

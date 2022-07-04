@@ -44,15 +44,15 @@ int main(int argc, char *argv[])
 
     if (file_out_type == SOCKET) /* If user decided to send events to server */
     {
-        char *ip = argv[2];
-        short port = atoi(argv[3]);
+        char *ip = argv[1];
+        short port = atoi(argv[2]);
         if ((fd = openConnectionWithServer(ip, port)) < 0) /* Connecting with server */
             syslog(LOG_ERR, "Couldn't connect with server, check hostname or try again later: %s", strerror(errno)), exit(EXIT_FAILURE);
         unblockSignal(SIGPIPE); /* If server closed connection we terminate daemon */
     }
     else if (file_out_type == FILE) /* If user decided to save events locally */
     {
-        char *file_out_path = argv[2];
+        char *file_out_path = argv[1];
         if ((fd = open(file_out_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR)) < 0)
             syslog(LOG_ERR, "Couldn't open file %s: %s", argv[2], strerror(errno)), exit(EXIT_FAILURE);
         unblockSignal(SIGTERM); /* We can terminate daemon only by sending SIGTERM or SIGKILL/SIGSTOP(not adviced) */

