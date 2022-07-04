@@ -84,5 +84,3 @@ int unblockSignal(int signum)
         return -1;
     return 0;
 }
-
-// Comando utile per stampare gli ultimi log in syslog lanciati dal daemon : tail -f /var/log/syslog

