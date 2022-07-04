@@ -264,7 +264,8 @@ Read operations could block indefinitely, for example when the user on the clien
 <H4 id="Logging"> Logging events session example </H4>
 Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Key: &ltKEY&gt"</b>.Let us look at an example of server receiving events from two clients:
 
-![Immagine 2022-07-04 143610](https://user-images.githubusercontent.com/75443422/177156766-00ae779a-043c-41c2-9785-8db215b546f5.png)
+![Immagine 2022-07-04 143610](https://user-images.githubusercontent.com/75443422/177171886-158be719-e4b4-48ec-a5b6-bd5817f26ccf.jpg)
+
 
 
 <H2 id="References"> References </H2>
