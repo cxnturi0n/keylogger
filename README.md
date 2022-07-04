@@ -79,7 +79,7 @@ First of all, you have to specify where to send the events, to a server or local
 <H4 id="Finding"> Finding keyboard device </H4>
 The <b>event interface</b> exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). Those device files can be found into <b>/dev/input/</b>.
 
-The function <code>int findKeyboardDevice(char \*dir_path)</code> has the task of exploring devices and subdirectories(by calling itself recursively if current file is a directory) and returns the first keyboard device it finds, if any. How do we actually check if a character device is actually a keyboard one? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
+The function <code>int findKeyboardDevice(char \*dir_path)</code> has the task of exploring devices and subdirectories(by calling itself recursively if current file is a directory) and returns the first keyboard device it finds, if any. How do we check if a character device is actually a keyboard one? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
 Take a look at a function that uses the linux event API to check whether or not an input device is a keyboard device:
 
 ```c
