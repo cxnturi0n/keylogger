@@ -211,8 +211,38 @@ int daemonize(char *name)
 ```
 
 <H4 id="Single">Single instance daemon and file locking</H4>
-If user choose to have have a single instance daemon, 
+User can decide to run the process as a single instance daemon. To ensure that only a copy of the daemon runs at a time, the daemon itself creates a file with a fixed name (in our case, "keylogger-daemon.pid") and places a write lock on the entire file, and also writes its pid in it. If other processes want to acquire a write lock on that particular file, they will fail in the intent because another daemon already owns the lock, that is, another instance of the same daemon is already running. This is the function that checks whether or not another instance is already running:
+  
+```c
+  
+int daemonAlreadyRunning(int *lock_file)
+{
+    char buf[16];
+    int fd = open(LOCKFILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* Opening lock file */
+    if (fd < 0)                                          /* If open went wrong */
+        syslog(LOG_ERR, "Couldn't open %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
+    if (lockfile(fd) < 0) /* If lockfile() went wrong */
+    {
+        if (errno == EACCES || errno == EAGAIN) /* If lockfile failed with errno set to EACCESS or EAGAIN
+                                                 it means that the lock has already been running so another is  daemon is running */
+        {
+            syslog(LOG_ERR, "Another copy of this daemon is running! Quitting..");
+            close(fd);
+            return 1;
+        }
+        syslog(LOG_ERR, "Can’t lock %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
+    }
+    /* If Daemon acquired lock, writes its pid into the lock file */
+    syslog(LOG_INFO, "Daemon successfully acquired lock, pid can be read into: %s", LOCKFILE);
+    ftruncate(fd, 0);
+    sprintf(buf, "%ld", (long)getpid());
+    write(fd, buf, strlen(buf) + 1);
+    *lock_file = fd;
+    return 0;
+}
 
+  ```
+  
 <H3 id="Log"> Syslog </H3>
 Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. 
 Here is what happens if we <code>run tail -f /var/log/syslog</code>:
