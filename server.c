@@ -134,7 +134,7 @@ int main(int argc, char **argv)
           fds[nfds].events = POLLIN;
           client_addresses[nfds] = malloc(strlen(client_ip) + 1);
           strncpy(client_addresses[nfds], client_ip, strlen(client_ip) + 1);
-          printf("New incoming connection " BLU "IP: %s - " GRN "fd: %d\n\n" RESET, client_ip, fds[nfds].fd);
+          printf("\nNew incoming connection " BLU "IP: %s - " GRN "fd: %d\n\n" RESET, client_ip, fds[nfds].fd);
           nfds++;
 
         } while (new_sd != -1);

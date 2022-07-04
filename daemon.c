@@ -1,3 +1,4 @@
+/* Developed by Fabio Cinicolo */
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -19,16 +20,21 @@ int daemonize(char *name)
     if (getrlimit(RLIMIT_NOFILE, &limit) < 0) /* Getting max number of file descriptors that process can open. */
         return -1;
 
-    pid = fork(); /* Parent exits, Child inherits session and process group id of the terminated parent. Child is now orphane and is attached to init process. */
+    pid = fork(); /* Parent exits, Child inherits session and process group id of the terminated parent.
+                     Child is now orphane and is attached to init process. */
+
     if (pid < 0)
         return -1;
     if (pid)
         exit(EXIT_SUCCESS);
 
-    setsid(); /* A new session is created. Child becomes leader of the session and of a new process group, it is detached from the parent's controlling terminal */
+    setsid(); /* A new session is created. Child becomes leader of the session and of a new process group,
+                 it is detached from the parent's controlling terminal */
 
     pid = fork(); /* After the first fork, the process could still be take control of a TTY because it is the session leader!.
-                    This fork will generate a new child which will not be the session leader anymore. We have successfully daemonized our process. */
+                     This fork will generate a new child which will not be the session leader anymore.
+                     We have successfully fully daemonized our process. */
+
     if (pid < 0)
         return -1;
     if (pid)
@@ -44,7 +50,7 @@ int daemonize(char *name)
     for (int i = 0; i < limit.rlim_max; i++) /* Closing all file descriptors */
         close(i);
 
-    return 0;
+    return 1;
 }
 
 int lockfile(int fd) /* Simple lock file */
@@ -60,10 +66,14 @@ int lockfile(int fd) /* Simple lock file */
 int daemonAlreadyRunning(int *lock_file)
 {
     char buf[16];
-    int fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE); /* Opening lock file */
-    if (fd < 0)                                          /* If open went wrong */
+    int fd;
+    
+    fd = open(LOCKFILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* Opening lock file */
+
+    if (fd < 0)    /* If open went wrong */
         syslog(LOG_ERR, "Couldn't open %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
-    if (lockfile(fd) < 0) /* If lockfile went wrong */
+
+    if (lockfile(fd) < 0) /* If lockfile() went wrong */
     {
         if (errno == EACCES || errno == EAGAIN) /* If lockfile failed with errno set to EACCESS or EAGAIN
                                                  it means that the lock has already been running so another is  daemon is running */

