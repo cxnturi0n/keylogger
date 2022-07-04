@@ -218,9 +218,13 @@ User can decide to run the process as a single instance daemon. To ensure that o
 int daemonAlreadyRunning(int *lock_file)
 {
     char buf[16];
-    int fd = open(LOCKFILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* Opening lock file */
-    if (fd < 0)                                          /* If open went wrong */
+    int fd;
+    
+    fd = open(LOCKFILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* Opening lock file */
+
+    if (fd < 0)    /* If open went wrong */
         syslog(LOG_ERR, "Couldn't open %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
+        
     if (lockfile(fd) < 0) /* If lockfile() went wrong */
     {
         if (errno == EACCES || errno == EAGAIN) /* If lockfile failed with errno set to EACCESS or EAGAIN
