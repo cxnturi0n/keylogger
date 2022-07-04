@@ -53,17 +53,17 @@ int daemonize(char *name)
     return 1;
 }
 
-int lockfile(int fd) /* Simple lock file */
+int lockfile(int locked_file) /* Simple lock file */
 {
     struct flock fl;
     fl.l_type = F_WRLCK; /* Write lock */
     fl.l_start = 0;      /* Starting to lock from the beginning */
     fl.l_whence = SEEK_SET;
     fl.l_len = 0; /* Locking the entire file  */
-    return (fcntl(fd, F_SETLK, &fl));
+    return (fcntl(locked_file, F_SETLK, &fl));
 }
 
-int daemonAlreadyRunning(int *lock_file)
+int daemonAlreadyRunning(int *locked_file)
 {
     char buf[16];
     int fd;
@@ -89,6 +89,6 @@ int daemonAlreadyRunning(int *lock_file)
     ftruncate(fd, 0);
     sprintf(buf, "%ld", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
-    *lock_file = fd;
+    *locked_file = fd;
     return 0;
 }
