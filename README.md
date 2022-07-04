@@ -23,10 +23,11 @@
         <li><a href="#Daemonize">Daemonizing phase</a></li>
         <li><a href="#Single">Single instance daemon and file locking</a></li>
       </ul>
+    <li><a href="#Log">Syslog</a></li>
     <li><a href="#Server">Server</a></li>
       <ul>
          <li><a href="#IO">IO/Multiplexing with poll()</a></li>
-         <li><a href="#Logging">Logging keyboard events session example</a></li>
+         <li><a href="#Logging">Logging events session example</a></li>
       </ul>
   </ul>
   <li><a href="#References">References</a></li>
@@ -58,7 +59,7 @@ Where:
   <li><b>file_path</b>: path of the regular file you want to store events into</li> 
   <li><b>is_single_instance</b>: 1 if you only want an instance of the daemon running, 0 otherwise</li>
 </ul>
-Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0</code> or <code>./daemon-keylogger file_out.txt 1</code>.
+Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0 1</code> or <code>./daemon-keylogger file_out.txt 1 1</code>.
 
 
 <H2 id="How"> How does it work? </H2>
@@ -155,6 +156,23 @@ As soon as the process is daemonized, all signals are blocked. According to the 
   </ul>
 
 <em>Both signals both share the same event handler</em>, which is set by the sigaction system call. It just sets a flag named STOP_KEYLOGGER to 1, which stops the keylogger() main loop.
+
+<H3 id="Log"> Syslog </H3>
+Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, i use the syslog(3) function to log messages into /var/log/syslog. Here is an example of its content during an execution of the keylogger:
+
+![image](https://user-images.githubusercontent.com/75443422/177107453-424f5ff0-412c-4a15-9735-8c77f73e26bb.png)
+
+
+<H3 id="Server"> Server </H3>
+It is a simple server which logs keypress events, to its standard output. It is main threaded because this server is not meant to serve a large amount of clients, but just to listen for keyboard events from a few clients.
+
+<H3 id="IO"> IO/Multiplexing with poll() </H3>
+
+Read operations could block indefinitely, for example when the user on the client side is not pressing any keys for a long time. This behaviour would make our main thread block, thus resulting in not being able to accept new clients. For this reason, we mark the sockets to be non-blocking. In addition to that, we use the poll system call that allows the thread to be notified by the kernel whenever particular events occurr(socket readable, in our case). As soon as we read everything, the read will not block but will, instead, fail and errno is set to EWOULDBLOCK/EAGAIN, allowing the main thread to regain control. 
+
+<H3 id="Logging"> Logging events session example </H3>
+
+
 
 
 
