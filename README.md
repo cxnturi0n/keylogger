@@ -165,7 +165,7 @@ In this phase, the process is converted to a daemon. The code I used is a slight
 
 ```c
 
-int daemonize(char *name)
+int daemonize()
 {
     pid_t pid;
     struct rlimit limit;
@@ -173,29 +173,22 @@ int daemonize(char *name)
     umask(0); /* Resetting process file mode creation mask */
 
     if (getrlimit(RLIMIT_NOFILE, &limit) < 0) /* Getting max number of file descriptors that process can open. */
-        return -1;
+        return 0;
 
-    pid = fork(); /* Parent exits, Child inherits session and process group id of the terminated parent.
-                     Child is now orphane and is attached to init process. */
-
+    pid = fork(); /* Parent exits, Child inherits session and process group id of the terminated parent. Child is now orphane and is attached to init process. */
     if (pid < 0)
-        return -1;
+        return 0;
     if (pid)
         exit(EXIT_SUCCESS);
 
-    setsid(); /* A new session is created. Child becomes leader of the session and of a new process group,
-                 it is detached from the parent's controlling terminal */
+    setsid(); /* A new session is created. Child becomes leader of the session and of a new process group, it is detached from the parent's controlling terminal */
 
     pid = fork(); /* After the first fork, the process could still be take control of a TTY because it is the session leader!.
-                     This fork will generate a new child which will not be the session leader anymore.
-                     We have successfully fully daemonized our process. */
-
+                    This fork will generate a new child which will not be the session leader anymore. We have successfully daemonized our process. */
     if (pid < 0)
-        return -1;
+        return 0;
     if (pid)
         exit(EXIT_SUCCESS);
-
-    openlog(name, LOG_PID, LOG_USER); /* Pid and name will appear in the syslog */
 
     /* chdir("/");  Changes the working directory to a safe one. */
 
