@@ -57,7 +57,7 @@ int lockfile(int fd) /* Simple lock file */
 int daemonAlreadyRunning(int *lock_file)
 {
     char buf[16];
-    int fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE); /* Opening lock file */
+    int fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE); /* Opening file */
     if (fd < 0)                                          /* If open went wrong */
         return 2;
     if (lockfile(fd) < 0) /* If lockfile went wrong */
@@ -71,7 +71,7 @@ int daemonAlreadyRunning(int *lock_file)
         close(fd);
         return 2;
     }
-    /* If Daemon acquired lock, writes its pid into the lock file */
+    /* If Daemon acquired write lock, writes its pid into the locked file */
     ftruncate(fd, 0);
     sprintf(buf, "%ld", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
