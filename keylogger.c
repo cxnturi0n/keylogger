@@ -140,7 +140,7 @@ int isKeyboardDevice(char *path, int *keyboard_device)
     int32_t keys = KEY_Q | KEY_A | KEY_Z | KEY_1 | KEY_9;
     int fd;
 
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY, S_IRUSR | S_IRGRP | S_IROTH);
 
     if (fd < 0)
         return 0;
