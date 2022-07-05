@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 #include <errno.h>
 #include "daemon.h"
