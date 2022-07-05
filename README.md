@@ -94,11 +94,11 @@ int isKeyboardDevice(char *path, int *keyboard_device)
     fd = open(path, O_RDONLY);
 
     if (fd < 0)
-        syslog(LOG_ERR, "Couldn't open %s: %s", path, strerror(errno));
+        return 0;
 
     if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0)
     {
-        if ((events_bitmask & EV_KEY) == EV_KEY) 
+        if ((events_bitmask & EV_KEY) == EV_KEY)
         {
             if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0)
                 if ((keys & keys_bitmask) == keys)
