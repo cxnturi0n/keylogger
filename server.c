@@ -50,6 +50,18 @@ int main(int argc, char **argv)
   if ((listen_sd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     perror("socket()"), exit(EXIT_FAILURE);
 
+  /*************************************************************/
+  /* Set socket to be nonblocking. All of the sockets for      */
+  /* the incoming connections will also be nonblocking since   */
+  /* they will inherit that state from the listening socket.   */
+  /*************************************************************/
+  if (ioctl(listen_sd, FIONBIO, (char *)&on) < 0)
+  {
+    perror("ioctl()");
+    close(listen_sd);
+    exit(EXIT_FAILURE);
+  }
+
   server_addr.sin_family = PF_INET;
   server_addr.sin_port = htons(SERVER_PORT);
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -124,7 +136,7 @@ int main(int argc, char **argv)
             break;
           }
 
-          /* Put the socket in non-blocking mode */
+          // Put the socket in non-blocking mode
           if (fcntl(new_sd, F_SETFL, fcntl(new_sd, F_GETFL) | O_NONBLOCK) < 0)
             perror("fcntl"), exit(EXIT_FAILURE);
 

