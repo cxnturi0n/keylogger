@@ -71,21 +71,19 @@ int daemonAlreadyRunning(int *locked_file)
     fd = open(LOCKFILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* Opening lock file */
 
     if (fd < 0)    /* If open went wrong */
-        syslog(LOG_ERR, "Couldn't open %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
+        return 0;
 
     if (lockfile(fd) < 0) /* If lockfile() went wrong */
     {
         if (errno == EACCES || errno == EAGAIN) /* If lockfile failed with errno set to EACCESS or EAGAIN
                                                  it means that the lock has already been running so another is  daemon is running */
         {
-            syslog(LOG_ERR, "Another copy of this daemon is running! Quitting..");
             close(fd);
             return 1;
         }
-        syslog(LOG_ERR, "Can’t lock %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
+        return -1;
     }
-    /* If Daemon acquired lock, writes its pid into the lock file */
-    syslog(LOG_INFO, "Daemon successfully acquired lock, pid can be read into: %s", LOCKFILE);
+    /* If Daemon acquired write lock, writes its pid into the lock file */
     ftruncate(fd, 0);
     sprintf(buf, "%ld", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
