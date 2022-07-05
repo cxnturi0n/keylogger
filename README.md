@@ -208,33 +208,28 @@ User can decide to run the process as a single instance daemon. To ensure that o
   
 ```c
   
-int daemonAlreadyRunning(int *locked_file)
+int daemonAlreadyRunning(int *lock_file)
 {
     char buf[16];
-    int fd;
-    
-    fd = open(LOCKFILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* Opening lock file */
-
-    if (fd < 0)    /* If open went wrong */
-        syslog(LOG_ERR, "Couldn't open %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
-        
-    if (lockfile(fd) < 0) /* If lockfile() went wrong */
+    int fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE); /* Opening file */
+    if (fd < 0)                                          /* If open went wrong */
+        return 2;
+    if (lockfile(fd) < 0) /* If lockfile went wrong */
     {
         if (errno == EACCES || errno == EAGAIN) /* If lockfile failed with errno set to EACCESS or EAGAIN
-                                                 it means that the lock has already been running so another is  daemon is running */
+                                                   it means that the lock has already been running so another is  daemon is running */
         {
-            syslog(LOG_ERR, "Another copy of this daemon is running! Quitting..");
             close(fd);
             return 1;
         }
-        syslog(LOG_ERR, "Can’t lock %s: %s", LOCKFILE, strerror(errno)), exit(EXIT_FAILURE);
+        close(fd);
+        return 2;
     }
-    /* If Daemon acquired lock, writes its pid into the locked file */
-    syslog(LOG_INFO, "Daemon successfully acquired lock, pid can be read into: %s", LOCKFILE);
+    /* If Daemon acquired write lock, writes its pid into the locked file */
     ftruncate(fd, 0);
     sprintf(buf, "%ld", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
-    *locked_file = fd;
+    *lock_file = fd;
     return 0;
 }
 
