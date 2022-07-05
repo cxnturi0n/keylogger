@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
     if (!daemonize()) /* Convert process to daemon */
         fprintf(stderr, "Couldn't daemonize process\n"), exit(EXIT_FAILURE);
 
-    syslog(LOG_INFO, "Process successfully daemonized");
-
     openlog(SYSLOG_PROC_NAME, LOG_PID, LOG_USER); /* Pid and name will appear in the syslog */
+    
+    syslog(LOG_INFO, "Process successfully daemonized");
 
     is_single_instance = argc == 4 ? atoi(argv[3]) : atoi(argv[2]);
 
