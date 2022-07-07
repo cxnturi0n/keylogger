@@ -50,11 +50,7 @@ int main(int argc, char **argv)
   if ((listen_sd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     perror("socket()"), exit(EXIT_FAILURE);
 
-  /*************************************************************/
-  /* Set socket to be nonblocking. All of the sockets for      */
-  /* the incoming connections will also be nonblocking since   */
-  /* they will inherit that state from the listening socket.   */
-  /*************************************************************/
+   /* Set listening socket in non-blocking mode */
   if (ioctl(listen_sd, FIONBIO, (char *)&on) < 0)
   {
     perror("ioctl()");
