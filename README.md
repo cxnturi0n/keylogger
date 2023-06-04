@@ -1,6 +1,6 @@
 # Keylogger-C-Unix
 
-<H4>A keylogger written in C on Unix platform, implemented as a daemon process, that sends keyboard press events to a server or stores them locally. It has been developed to familiarize with some of the Operating Systems concepts studied during class</H5>
+<H4>A keylogger written in C on Unix platform, implemented as a daemon process, that sends keyboard press events to a server or stores them locally. It has been developed to familiarize with some of the Operating Systems concepts studied during class.</H5>
 
 <H2> Table of contents </H2>
 <ul>
