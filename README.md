@@ -7,7 +7,7 @@
   <li><a href="#Usage">Usage</a></li>
   <ul>
     <li><a href="#Compiling">Compiling</a></li>
-    <li><a href="#Arguments">Command line arguments</a></li>
+    <li><a href="#Running">Running</a></li>
   </ul>
   <li><a href="#How">How does it work?</a></li>
   <ul>
@@ -23,7 +23,6 @@
         <li><a href="#Daemonize">Daemonizing phase</a></li>
         <li><a href="#Single">Single instance daemon and file locking</a></li>
       </ul>
-    <li><a href="#Log">Syslog</a></li>
     <li><a href="#Server">Server</a></li>
       <ul>
          <li><a href="#IO">IO/Multiplexing with poll()</a></li>
@@ -45,21 +44,20 @@ gcc main.c keylogger.c daemon.c -o daemon-keylogger
 
 ```
 
-<H3 id="Arguments"> Command line arguments </H3>
+<H3 id="Running"> Command line arguments </H3>
 
-You can invoke the executable in two possible ways:
+Synoxis:
 <ul>
-  <li>&lt<b>executable_path</b>&gt &lt<b>host</b>&gt &lt<b>port</b>&gt &lt<b>is_single_instance</b>&gt</li>
-  <li>&lt<b>executable_path</b>&gt &lt<b>file_path</b>&gt &lt<b>is_single_instance</b>&gt</li>
+  <li>&lt<b>executable_path</b>&gt &lt<b>host</b>&gt &lt<b>port</b>&gt &lt<b>timeout</b>&gt</li>
 </ul>
 Where:
 <ul>
   <li><b>executable_path</b>: path of the executable</li>
-  <li><b>host</b> and <b>port</b>: respectively the hostname or ip address and the port of the server you want to send the events to</li>
-  <li><b>file_path</b>: path of the regular file you want to store events into</li> 
-  <li><b>is_single_instance</b>: 1 if you only want an instance of the daemon running at a time, 0 otherwise</li>
+  <li><b>host</b>: server hostname or ip address</li>
+  <li><b>port</b>: server port</li> 
+  <li><b>timeout</b>: time [ms] in which keylogger will wait for the first keystroke from the user in order to detect the correct keyboard device</li>
 </ul>
-Running examples: <code>./daemon-keylogger 127.0.0.1 12345 0</code> or <code>./daemon-keylogger file_out.txt 1</code>.
+Running example: <code>./daemon-keylogger 127.0.0.1 12345 60000</code>
 
 
 <H2 id="How"> How does it work? </H2>
@@ -234,14 +232,7 @@ int daemonAlreadyRunning(int *lock_file)
 }
 
   ```
-  
-<H3 id="Log"> Syslog </H3>
-Daemon processes do not own a controlling terminal, so we cannot log error or info messages directly to standard output or standard error. For this reason, the syslog(3) function is used to log messages into /var/log/syslog. 
-Here is what happens if we <code>run tail -f /var/log/syslog</code> after running the daemon:
-
-![image](https://user-images.githubusercontent.com/75443422/177107453-424f5ff0-412c-4a15-9735-8c77f73e26bb.png)
-
-
+ 
 <H3 id="Server"> Server </H3>
 It is a simple server which logs keypress events, to its standard output. I choose single threading because this server is not meant to serve a large amount of clients, but just to listen for keyboard events from a few clients.
 
