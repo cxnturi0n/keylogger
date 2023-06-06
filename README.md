@@ -39,7 +39,7 @@ Synopsis:
 </ul>
 Running example: <code>./daemon-keylogger 127.0.0.1 12345 60000</code>
 
-<H3 id="Finding"> Finding keyboard devices </H4>
+<H3 id="Finding"> Finding keyboard devices </H3>
 How do we know if an input device is a keyboard device? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
 The following function uses the linux event API to check whether or not an input device is a keyboard device:
 
@@ -64,9 +64,9 @@ The first ioctl call allows us to get the event bits, that is, a bitmask express
 If EV_KEY bit is set then we have found a device that has keys or buttons, but we cannot yet be sure that it is a keyboard! A power button will have this bit set but it is not obviously a keyboard. 
 However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to know if the device supports "q", "a", "z", "1" and "9", if so, we found a device that acts as a keyboard
 
-<H3 id="Choosing"> Choosing the right keyboard device </H4>
-The function <code>int \*findKeyboards(char \*path, int \*num_keyboards)</code> iterates over all input devices in /dev/input directory, namely /dev/input/eventX, and returns an array containing all descriptors of devices that support different keys, using <code>int isKeyboardDevice(int fd)</code> function. I use a keyboard and a gaming mouse(with some fancy buttons on it) and I realized that both were marked as a keyboard device. My gaming mouse supports keys like A, B, C, Q, W E, 1, 2,.. keys that are generally supported by keyboards! In addition to that, it seemed that, at least for this particular gaming mice, EV_REL bits (used to describe devices whose relative axis value changes, like mices precisely) were not even set. In order to provide a robust way of making sure that keylogging occurs on a legit keyboard and not on a gaming mice or some other device passed of as a keyboard, I first retrieve a list of descriptors of possible keyboard devices, and then function <code> int findRealKeyboard(int *keyboards, int num_keyboards, int timeout, int *keyboard) </code> will listen over every descriptor of that list, using poll() system call, and returns the first descriptor over which a legit keycode has been recorded (for example, user presses on ‘A’ key).
-<H3 id="Reading"> Reading events </H4>
+<H3 id="Choosing"> Choosing the right keyboard device </H3>
+The function <code>int *findKeyboards(char *path, int *num_keyboards)</code> iterates over all input devices in **/dev/input directory**, namely **/dev/input/eventX**, and returns an array containing all descriptors of devices that support different keys, using <code>int isKeyboardDevice(int fd)</code> function. I use a keyboard and a gaming mouse(with some fancy buttons on it) and I realized that both were marked as a keyboard device. My gaming mouse supports keys like A, B, C, Q, W E, 1, 2,.. keys that are generally supported by keyboards! In addition to that, it seemed that, at least for this particular gaming mice, EV_REL bits (used to describe devices whose relative axis value changes, like mices precisely) were not even set. In order to provide a robust way of making sure that keylogging occurs on a legit keyboard and not on a gaming mice or some other device passed of as a keyboard, I first retrieve a list of descriptors of possible keyboard devices, and then function <code>int findRealKeyboard(int *keyboards, int num_keyboards, int timeout, int *keyboard) </code> will listen over every descriptor of that list, using poll() system call, returning the first descriptor over which a legit keycode has been recorded (for example, user presses on ‘A’ key).
+<H3 id="Reading"> Reading events </H3>
 Retrieving events from a device requires a standard character device “read" function. Each time you read from an event device you will get a number of events. Every event consists of a struct input_event. If you wish to know more about input_event fields, give a look at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
 
 ```c
