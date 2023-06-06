@@ -13,10 +13,6 @@
     <li><a href="#Daemonize">Daemonizing</a></li>
     <li><a href="#Single">Single instance daemon and file locking</a></li>
     <li><a href="#Server">Server</a></li>
-      <ul>
-         <li><a href="#IO">IO/Multiplexing with poll()</a></li>
-         <li><a href="#Logging">Logging events session example</a></li>
-      </ul>
   <li><a href="#References">References</a></li>
   <li><a href="#Disclaimer">Disclaimer</a></li>
 </ul>
