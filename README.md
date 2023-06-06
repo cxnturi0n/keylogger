@@ -23,11 +23,8 @@
 
 <H3 id="Compiling"> Compiling </H3>
 
-To compile:
 ```c
-
 gcc main.c keylogger.c daemon.c -o daemon-keylogger
-
 ```
 
 <H3 id="Running"> Command line arguments </H3>
@@ -45,7 +42,7 @@ Running example: <code>./daemon-keylogger 127.0.0.1 12345 60000</code>
 <H3 id="Finding"> Finding keyboard devices </H4>
 The <b>event interface</b> exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). Those device files can be found into <b>/dev/input/</b>.
 
-The function <code>int *findKeyboards(char \*path, int \*num_keyboards)</code> has the task of exploring input devices, returning an array of descriptors of devices that act as a keyboard. How do we check if a character device is actually a keyboard one? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
+The function <code>int \*findKeyboards(char \*path, int \*num_keyboards)</code> has the task of exploring input devices, returning an array of descriptors of devices that act as a keyboard. But how do we know if an input device is a keyboard device? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
 The following function uses the linux event API to check whether or not an input device is a keyboard device:
 
 ```c
@@ -70,7 +67,7 @@ If EV_KEY bit is set then we have found a device that has keys or buttons, but w
 However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to know if the device supports "q", "a", "z", "1" and "9", if so, we found a device that acts as a keyboard
 
 <H3 id="Choosing"> Choosing the right keyboard device </H4>
-TODO
+You may be wondering why do we actually need 
 
 <H3 id="Reading"> Reading events </H4>
 Retrieving events from a device requires a standard character device “read" function. Each time you read from an event device you will get a number of events. Every event consists of a struct input_event. If you wish to know more about input_event fields, give a look at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
@@ -105,7 +102,7 @@ Keylogger process can terminate gracefully by receiving two signals:
 2) SIGPIPE (Closing Server)
 
 <H3 id="Daemonize">Daemonizing</H4>
-I thought that it would be nice having the keylogger running in background under not the direct control of the user. For this reason I choose to implement the program as a daemon process. In this phase, the process is converted to a daemon. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
+I thought that it would be nice having the keylogger running in background (under no direct control of the user). For this reason I choose to implement the program as a daemon process. The process is converted to a daemon. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
 
 ```c
 
@@ -148,7 +145,7 @@ int daemonize()
 ```
 
 <H3 id="Single">Single instance daemon and file locking</H4>
-User can decide to run the process as a single instance daemon. To ensure that only a copy of the daemon runs at a time, the daemon itself creates a file with a fixed name (in our case, "keylogger-daemon.pid") and places a write lock on the entire file, and also writes its pid in it. If other processes want to acquire a write lock on that particular file, they will fail in the intent because another daemon already owns the lock, that is, another instance of the same daemon is already running. This is the function that checks whether or not another instance is already running, if it is not the case, it returns the locked file:
+Only one instance of the keylogger will run. To ensure that only a copy of the daemon runs at a time, the daemon itself creates a file with a fixed name (in our case, "keylogger-daemon.pid") and places a write lock on the entire file, and also writes its pid in it. If other processes want to acquire a write lock on that particular file, they will fail in the intent because another daemon already owns the lock, that is, another instance of the same daemon is already running. This is the function that checks whether or not another instance is already running, if it is not the case, it returns the locked file:
   
 ```c
   
