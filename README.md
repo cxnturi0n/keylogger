@@ -1,6 +1,6 @@
 # Keylogger-C-Unix
 
-<H4>A simple Keylogger written in C on Unix platform, implemented as a daemon process that sends keystrokes to a server. It has been developed to familiarize with some of the Operating Systems concepts studied during class.</H5>
+<H4>A simple Keylogger written in C on Unix platform, implemented as a daemon process, that sends keystrokes to a server.</H5>
 
 <H2> Table of contents </H2>
 <ul>
@@ -27,7 +27,7 @@
 gcc main.c keylogger.c daemon.c -o daemon-keylogger
 ```
 
-<H3 id="Running"> Command line arguments </H3>
+<H3 id="Running"> Running </H3>
 
 Synopsis:
  <code><b>executable_path</b> <b>host</b> <b>port</b> <b>timeout</b></code>
@@ -40,9 +40,7 @@ Synopsis:
 Running example: <code>./daemon-keylogger 127.0.0.1 12345 60000</code>
 
 <H3 id="Finding"> Finding keyboard devices </H4>
-The <b>event interface</b> exposes the raw events to userspace through a collection of character device nodes, one character device node per logical input device(keyboard, mouse, joystick, power buttons, ..). Those device files can be found into <b>/dev/input/</b>.
-
-The function <code>int \*findKeyboards(char \*path, int \*num_keyboards)</code> has the task of exploring input devices, returning an array of descriptors of devices that act as a keyboard. But how do we know if an input device is a keyboard device? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
+How do we know if an input device is a keyboard device? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
 The following function uses the linux event API to check whether or not an input device is a keyboard device:
 
 ```c
@@ -67,7 +65,7 @@ If EV_KEY bit is set then we have found a device that has keys or buttons, but w
 However, EVIOCGBIT permits us to make more precise queries about the specific device features, in our case, the second ioctl call, will allow us to know if the device supports "q", "a", "z", "1" and "9", if so, we found a device that acts as a keyboard
 
 <H3 id="Choosing"> Choosing the right keyboard device </H4>
-You may be wondering why do we actually need 
+The function <code>int \*findKeyboards(char \*path, int \*num_keyboards)</code> iterates over all input devices in /dev/input directory, namely /dev/input/eventX, and returns an array containing all descriptors of devices that support different keys, using <code>int isKeyboardDevice(int fd)</code> function. I use a keyboard and a gaming mouse(with some fancy buttons on it) and I realized that both were marked as a keyboard device. Gaming mouse supports keys like A, B, C, Q, W E, 1, 2,.. keys that are generally supported by keyboards! In addition to that, it seemed that, at least for this particular gaming mice, EV_REL bits (used to describe devices whose relative axis value changes, like mices precisely) were not even set. In order to provide a robust way of making sure that keylogging occurs on a legit keyboard and not on a gaming mice or some other device passed of a keyboard
 
 <H3 id="Reading"> Reading events </H4>
 Retrieving events from a device requires a standard character device “read" function. Each time you read from an event device you will get a number of events. Every event consists of a struct input_event. If you wish to know more about input_event fields, give a look at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
