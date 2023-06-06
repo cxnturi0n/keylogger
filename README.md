@@ -46,11 +46,8 @@ gcc main.c keylogger.c daemon.c -o daemon-keylogger
 
 <H3 id="Running"> Command line arguments </H3>
 
-Synoxis:
-<ul>
-  <li>&lt<b>executable_path</b>&gt &lt<b>host</b>&gt &lt<b>port</b>&gt &lt<b>timeout</b>&gt</li>
-</ul>
-Where:
+Synopsis:
+ <code><b>executable_path</b> <b>host</b> <b>port</b> <b>timeout</b></code>
 <ul>
   <li><b>executable_path</b>: path of the executable</li>
   <li><b>host</b>: server hostname or ip address</li>
