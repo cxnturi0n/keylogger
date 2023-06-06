@@ -168,11 +168,10 @@ int isKeyboardDevice(int fd)
     int32_t keys_bitmask = 0;
     int32_t keys = KEY_Q | KEY_A | KEY_Z | KEY_1 | KEY_9;
 
-    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0) // Getting bit events supported by device
-        if ((events_bitmask & EV_KEY) == EV_KEY)                               // If EV_KEY bit is set then it could be a Keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd)
-            if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0)
-                if ((keys & keys_bitmask) == keys) // If it support those keys then good chances are that we just found the keyboard device
-                    return (keys & keys_bitmask) == keys ? 1 : 0;
+    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0)          /* Getting bit events supported by device */
+        if ((events_bitmask & EV_KEY) == EV_KEY)                                        /* If EV_KEY bit is set then it could be a keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd) */
+            if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0) /* If it support those keys then we found a device that acts as a keyboard */
+                return (keys & keys_bitmask) == keys ? 1 : 0;
     return 0;
 }
 
