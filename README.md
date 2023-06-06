@@ -10,7 +10,7 @@
     <li><a href="#Choosing">Choosing the right keyboard device</a></li>
     <li><a href="#Reading">Reading events</a></li>
     <li><a href="#Termination">Termination</a></li>
-    <li><a href="#Daemonize">Daemonizing</a></li>
+    <li><a href="#Daemonize">Daemonizing process</a></li>
     <li><a href="#Single">Single instance daemon and file locking</a></li>
     <li><a href="#Server">Server</a></li>
   <li><a href="#References">References</a></li>
@@ -85,17 +85,18 @@ As you can see, a single key press has generated six input events. Let us take a
 <li>Type = 4 indicates an EV_MSC event, which according to the documentation is used to describe miscellaneous input data that do not fit into other types. From what my understanding is, it returns in the "value" field the device specific scan code, so, we are not really interested in it, because we could get wrong key codes if user remaps the keys. It is not completely useless though, it could be used to recognize which specific physical buttons are being pressed.</li>
 <li>This is the event we are mostly interested in. It has type = EV_KEY, which tells us that a key has either been pressed, released or repeated,  value = 1 tells us that a key has been pressed and code = "30" represents the KEY_A key, which is in fact the key I pressed.</li>
 <li>Type = 0 indicates an EV_SYN event, which is simply used to separate different hardware events.</li><br>
-<ol>
+</ol>
 The other three events generated are almost the same as the first three, they are associated to the hardware event of "releasing a key". If you take a look at the fifth event, you can see that we have an EV_KEY event with value = 0 that represents a key release, in this case, of the letter "a".<br>
 <em>In my program, only key press events will be captured, so, events whose type = EV_KEY and value = 1.</em>
 
 <H3 id="Termination">Termination</H4>
 Keylogger process can terminate gracefully by receiving two signals:
-1) SIGTERM 
-2) SIGPIPE (Closing Server)
-
-<H3 id="Daemonize">Daemonizing</H4>
-I thought that it would be nice having the keylogger running in background (under no direct control of the user). For this reason I choose to implement the program as a daemon process. The process is converted to a daemon. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
+<ul>
+    <li>SIGTERM</li>
+    <li>SIGPIPE (Shutting down Server)</li>
+</ul>
+<H3 id="Daemonize">Daemonizing process</H4>
+Keylogger will run in background (under no direct control of the user). For this reason I choose to implement the program as a daemon process. The process is converted to a daemon via the <code>int daemonize()</code> function. I added a few comments that explain all the steps required to daemonize a process, so I'll just leave the daemonize function here:
 
 ```c
 
