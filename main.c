@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
     int keyboard;
     int server;
     int flock;
-    int is_single_instance;
     int timeout;
     int *keyboards;
     int num_keyboards;
