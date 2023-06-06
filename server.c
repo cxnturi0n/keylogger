@@ -22,7 +22,7 @@
 
 #define SERVER_PORT 12345
 
-#define MAX_KEYBOARD_EVENTS 10
+#define MAX_KEYBOARD_EVENTS 3
 
 #define TRUE 1
 #define FALSE 0
