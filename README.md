@@ -20,20 +20,18 @@
 <H3 id="Compiling"> Compiling </H3>
 
 ```c
-gcc main.c keylogger.c daemon.c -o daemon-keylogger
+make
 ```
-
 <H3 id="Running"> Running </H3>
 
 Synopsis:
- <code><b>executable_path</b> <b>host</b> <b>port</b> <b>timeout</b></code>
+ <code><b>./keylogger</b> <b>host</b> <b>port</b> <b>timeout</b></code>
 <ul>
-  <li><b>executable_path</b>: path of the executable</li>
   <li><b>host</b>: server hostname or ip address</li>
   <li><b>port</b>: server port</li> 
   <li><b>timeout</b>: time [ms] in which keylogger will wait for the first keystroke from the user in order to detect the correct keyboard device</li>
 </ul>
-Running example: <code>./daemon-keylogger 127.0.0.1 12345 60000</code>
+Running example: <code>./keylogger 127.0.0.1 12345 60000</code>
 
 <H3 id="Finding"> Finding keyboard devices </H3>
 How do we know if an input device is a keyboard device? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
