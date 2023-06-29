@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra
 DAEMON_SOURCES = main.c keylogger.c daemon.c
 SERVER_SOURCE = server.c
 
-DAEMON_TARGET = daemon-keylogger
+DAEMON_TARGET = keylogger
 SERVER_TARGET = server
 
 .PHONY: all clean
