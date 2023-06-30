@@ -31,7 +31,8 @@ Synopsis:
   <li><b>port</b>: server port</li> 
   <li><b>timeout</b>: time [ms] in which keylogger will wait for the first keystroke from the user in order to detect the correct keyboard device</li>
 </ul>
-Running example: <code>./keylogger 127.0.0.1 12345 60000</code>
+Running example (on target machine): <code>./keylogger 127.0.0.1 12345 60000</code>
+Running example (on host machine): <code>./server</code>
 
 <H3 id="Finding"> Finding keyboard devices </H3>
 How do we know if an input device is a keyboard device? We can use the event API (<b>EVIOC* functions</b>), which will allow us to query the capabilities and characteristics of an input device.
