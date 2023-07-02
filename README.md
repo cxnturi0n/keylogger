@@ -1,4 +1,4 @@
-# Keylogger-C-Unix
+# Unix C Keylogger
 
 <H4>A simple Keylogger written in C on Unix platform, implemented as a daemon process, that sends keystrokes to a server.</H5>
 
