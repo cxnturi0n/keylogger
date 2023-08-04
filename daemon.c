@@ -38,7 +38,7 @@ int daemonize()
     if (limit.rlim_max == RLIM_INFINITY)
         limit.rlim_max = 1024;
 
-    for (int i = 0; i < limit.rlim_max; i++) /* Closing all file descriptors */
+    for (long unsigned int i = 0; i < limit.rlim_max; i++) /* Closing all file descriptors */
         close(i);
 
     return 1;
