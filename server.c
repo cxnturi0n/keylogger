@@ -1,5 +1,3 @@
-/* Developed by Fabio Cinicolo */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -22,6 +20,8 @@
 
 #define SERVER_PORT 12345
 
+#define BACKLOG 10
+
 #define MAX_KEYBOARD_EVENTS 3
 
 #define TRUE 1
@@ -31,7 +31,7 @@ char *keycodes[247] = {"RESERVED", "ESC", "1", "2", "3", "4", "5", "6", "7", "8"
                        "COMPOSE", "STOP", "AGAIN", "PROPS", "UNDO", "FRONT", "COPY", "OPEN", "PASTE", "FIND", "CUT", "HELP", "MENU", "CALC", "SETUP", "SLEEP", "WAKEUP", "FILE", "SENDFILE", "DELETEFILE", "XFER", "PROG1", "PROG2", "WWW", "MSDOS", "COFFEE", "SCREENLOCK", "ROTATE_DISPLAY",
                        "DIRECTION", "CYCLEWINDOWS", "MAIL", "BOOKMARKS", "COMPUTER", "BACK", "FORWARD", "CLOSECD", "EJECTCD", "EJECTCLOSECD", "NEXTSONG", "PLAYPAUSE", "PREVIOUSSONG", "STOPCD", "RECORD", "REWIND", "PHONE", "ISO", "CONFIG", "HOMEPAGE", "REFRESH", "EXIT", "MOVE", "EDIT", "SCROLLUP", "SCROLLDOWN", "KPLEFTPAREN", "KPRIGHTPAREN", "NEW", "REDO", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24", "PLAYCD", "PAUSECD", "PROG3", "PROG4", "ALL_APPLICATIONS", "DASHBOARD", "SUSPEND", "CLOSE", "PLAY", "FASTFORWARD", "BASSBOOST", "PRINT", "HP", "CAMERA", "SOUND", "QUESTION", "EMAIL", "CHAT", "SEARCH", "CONNECT", "FINANCE", "SPORT", "SHOP", "ALTERASE", "CANCEL", "BRIGHTNESSDOWN", "BRIGHTNESSUP", "MEDIA", "SWITCHVIDEOMODE", "KBDILLUMTOGGLE", "KBDILLUMDOWN", "KBDILLUMUP", "SEND", "REPLY", "FORWARDMAIL", "SAVE", "DOCUMENTS", "BATTERY", "BLUETOOTH", "WLAN", "UWB", "UNKNOWN", "VIDEO_NEXT", "VIDEO_PREV", "BRIGHTNESS_CYCLE", "BRIGHTNESS_AUTO", "BRIGHTNESS_ZERO", "DISPLAY_OFF", "WWAN", "WIMAX"};
 
-int main(int argc, char **argv)
+int main()
 {
   int on = 1;
   int listen_sd = -1, new_sd = -1;
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   struct pollfd fds[200];
   int nfds = 1;
   struct input_event kbd_events[MAX_KEYBOARD_EVENTS];
-  size_t event_size = sizeof(struct input_event);
+  ssize_t event_size = sizeof(struct input_event);
   int descriptors_ready;
   char *client_addresses[200];
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
   }
 
   /* listen_sd is a passive socket, it will listen for incoming connections */
-  if (listen(listen_sd, 32) < 0)
+  if (listen(listen_sd, BACKLOG) < 0)
   {
     perror("listen() failed");
     close(listen_sd);
