@@ -105,7 +105,7 @@ int keyboardFound(char *path, int *keyboard_fd)
         }
         else
         {
-            int fd = open(filepath, O_RDWR);
+            int fd = open(filepath, O_RDONLY);
             int keys_to_check[] = {KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC};
             if (!supportsRelativeMovement(fd) && supportsSpecificKeys(fd, keys_to_check, 12)) /* To avoid false positives like gaming mices that have EV_KEY and EV_REL set, */                                                                                  
             {                                                                                 /* current device is a keyboard if is not a mouse and support these 12 keys */
