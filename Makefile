@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall 
 
 DAEMON_SOURCES = main.c keylogger.c daemon.c
 SERVER_SOURCE = server.c
