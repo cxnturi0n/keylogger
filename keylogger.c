@@ -59,20 +59,6 @@ end:
     return;
 }
 
-int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
-{
-    ssize_t written;
-    do
-    {
-        written = write(fd, events, to_write);
-        if (written < 0) /* It can fail with EPIPE (If server closed socket) or with EINTR if it is interrupted by a signal before any bytes were written */
-            return 0;    /* If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written */
-        events += written;
-        to_write -= written;
-    } while (to_write > 0);
-    return 1;
-}
-
 int keyboardFound(char *path, int *keyboard_fd)
 {
     DIR *dir = opendir(path);
@@ -121,53 +107,36 @@ int keyboardFound(char *path, int *keyboard_fd)
     return 0; /* Keyboard device not found in the directory and its subdirectories. */
 }
 
-/* Returns true iff the given device supports keys. */
-int hasKeys(int fd)
+/* Returns true iff the given device supports the event types of $evbit_to_check. $evbit_to_check can be filled by OR-ing the bitmasks associated to event types*/
+/* example: evbit_to_check = (1 << EV_REL) | (1 << EV_KEY) | ...*/
+int hasEventTypes(int fd, unsigned long evbit_to_check)
 {
     unsigned long evbit = 0;
 
     /* Get the bit field of available event types. */
     ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
 
-    /* Check if EV_KEY is set. */
-    return (evbit & (1 << EV_KEY));
+    /* Check if EV_* set in $evbit_to_check are set. */
+    return ((evbit & evbit_to_check) == evbit_to_check);
+}
+
+/* Returns true iff the given device supports keys. */
+int hasKeys(int fd)
+{
+    return hasEventTypes(fd, (1 << EV_KEY));
 }
 
 /* Returns true iff the given device supports relative movement. */
 int hasRelativeMovement(int fd)
 {
-
-    unsigned long evbit = 0;
-
-    /* Get the bit field of available event types. */
-    ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
-
-    /* Check if EV_REL is set. */
-    return (evbit & (1 << EV_REL));
+    return hasEventTypes(fd, (1 << EV_REL));
 }
 
 /* Returns true iff the given device supports absolute movement. */
 int hasAbsoluteMovement(int fd)
 {
-
-    unsigned long evbit = 0;
-
-    /* Get the bit field of available event types. */
-    ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
-
-    /* Check if EV_REL is set. */
-    return (evbit & (1 << EV_ABS));
+    return hasEventTypes(fd, (1 << EV_ABS));
 }
-
-/* Returns true iff the given device supports $key.
-int hasSpecificKey(int device_fd, unsigned int key)
-{
-    size_t nchar = KEY_MAX / 8 + 1;
-    unsigned char bits[nchar];
-    // Get the bit fields of available keys.
-    ioctl(device_fd, EVIOCGBIT(EV_KEY, sizeof(bits)), &bits);
-    return bits[key / 8] & (1 << (key % 8));
-} */
 
 /* Returns true iff the given device supports $keys. */
 int hasSpecificKeys(int fd, int *keys, size_t num_keys)
@@ -210,4 +179,18 @@ int openConnectionWithServer(char *ip, short port)
         return 0;
 
     return sock_fd;
+}
+
+int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write)
+{
+    ssize_t written;
+    do
+    {
+        written = write(fd, events, to_write);
+        if (written < 0) /* It can fail with EPIPE (If server closed socket) or with EINTR if it is interrupted by a signal before any bytes were written */
+            return 0;    /* If it is interrupted by a signal after at least one byte was written, it returns the number of bytes written */
+        events += written;
+        to_write -= written;
+    } while (to_write > 0);
+    return 1;
 }
