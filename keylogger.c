@@ -107,8 +107,8 @@ int keyboardFound(char *path, int *keyboard_fd)
     return 0; /* Keyboard device not found in the directory and its subdirectories. */
 }
 
-/* Returns true iff the given device supports the event types of $evbit_to_check. $evbit_to_check can be filled by OR-ing the bitmasks associated to event types*/
-/* example: evbit_to_check = (1 << EV_REL) | (1 << EV_KEY) | ...*/
+/* Returns true iff the given device supports the event types of $evbit_to_check. $evbit_to_check can be filled by OR-ing the bitmasks associated to event types */
+/* example: evbit_to_check = (1 << EV_REL) | (1 << EV_KEY) | ... */
 int hasEventTypes(int fd, unsigned long evbit_to_check)
 {
     unsigned long evbit = 0;
