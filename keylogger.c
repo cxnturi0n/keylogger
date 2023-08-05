@@ -107,8 +107,8 @@ int keyboardFound(char *path, int *keyboard_fd)
         {
             int fd = open(filepath, O_RDONLY);
             int keys_to_check[] = {KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC};
-            if (!supportsRelativeMovement(fd) && supportsSpecificKeys(fd, keys_to_check, 12)) /* To avoid false positives like gaming mices that have EV_KEY and EV_REL set, */                                                                                  
-            {                                                                                 /* current device is a keyboard if is not a mouse and support these 12 keys */
+            if (!hasRelativeMovement(fd) && !hasAbsoluteMovement(fd) && hasKeys(fd) && hasSpecificKeys(fd, keys_to_check, 12))
+            {
                 closedir(dir);
                 *keyboard_fd = fd;
                 return 1; /* Return true if the keyboard device is found. */
@@ -121,20 +121,20 @@ int keyboardFound(char *path, int *keyboard_fd)
     return 0; /* Keyboard device not found in the directory and its subdirectories. */
 }
 
-/* Returns true iff the given device has keys.
-int supportsKeys(int fd)
+/* Returns true iff the given device supports keys. */
+int hasKeys(int fd)
 {
-
     unsigned long evbit = 0;
 
-    // Get the bit field of available event types.
+    /* Get the bit field of available event types. */
     ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
 
-    // Check if EV_KEY is set.
+    /* Check if EV_KEY is set. */
     return (evbit & (1 << EV_KEY));
-} */
+}
 
-int supportsRelativeMovement(int fd)
+/* Returns true iff the given device supports relative movement. */
+int hasRelativeMovement(int fd)
 {
 
     unsigned long evbit = 0;
@@ -146,8 +146,21 @@ int supportsRelativeMovement(int fd)
     return (evbit & (1 << EV_REL));
 }
 
+/* Returns true iff the given device supports absolute movement. */
+int hasAbsoluteMovement(int fd)
+{
+
+    unsigned long evbit = 0;
+
+    /* Get the bit field of available event types. */
+    ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
+
+    /* Check if EV_REL is set. */
+    return (evbit & (1 << EV_ABS));
+}
+
 /* Returns true iff the given device supports $key.
-int HasSpecificKey(int device_fd, unsigned int key)
+int hasSpecificKey(int device_fd, unsigned int key)
 {
     size_t nchar = KEY_MAX / 8 + 1;
     unsigned char bits[nchar];
@@ -157,7 +170,7 @@ int HasSpecificKey(int device_fd, unsigned int key)
 } */
 
 /* Returns true iff the given device supports $keys. */
-int supportsSpecificKeys(int fd, int *keys, size_t num_keys)
+int hasSpecificKeys(int fd, int *keys, size_t num_keys)
 {
 
     size_t nchar = KEY_MAX / 8 + 1;
