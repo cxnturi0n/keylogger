@@ -123,7 +123,9 @@ When using the `poll` system call, once we have read all available data from the
 
 <H4 id="Logging"> Logging events session example </H4>
 Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Key: &ltKEY&gt"</b>.Let us look at an example of server receiving events from two clients:
+
 ![Immagine 2022-07-04 143610](https://user-images.githubusercontent.com/75443422/177177850-e8e5b965-5d3d-4c6c-8947-77abfc1cf9d7.png)
+
 <H2 id="References"> References </H2>
 <ul>
 <li>About system calls, signals, daemon processes and other C programming stuff: https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739</li>
