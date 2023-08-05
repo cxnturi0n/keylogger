@@ -1,5 +1,3 @@
-<H4>A simple Keylogger written in C on Unix platform that sends keystrokes to a server.</H5>
-
 <H2> Table of contents </H2>
 <ul>
     <li><a href="#Compiling">Compiling</a></li>
