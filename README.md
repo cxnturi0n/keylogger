@@ -53,10 +53,18 @@ int hasEventTypes(int fd, unsigned long evbit_to_check)
     return ((evbit & evbit_to_check) == evbit_to_check);
 }
 ```
-This function takes two inputs: the file descriptor of the device and a bitmask representing the event types to be checked. The `ioctl` system call, using the `EVIOCGBIT` macro, populates the `evbit` bitmask, where each bit corresponds to a supported event type by the device. Subsequently, a bitwise AND operation is performed between the `evbit` bitmask (containing all supported event types by the device) and the `evbit_to_check` bitmask (representing the event types to be checked). If the result of this operation exactly matches the `evbit_to_check` bitmask, it indicates that the device supports the specified event types.
-As an example, let's illustrate the function's usage using a file descriptor for a gaming mouse. Suppose the gaming mouse has the `EV_KEY`, `EV_REL`, and `EV_LED` event type bits set, and we want to check if the current device supports `EV_KEY` and `EV_REL` (i.e., it is a gaming mouse).
 
-1. The hasEventTypes(fd, evbit_to_check) is called with fd being the descriptor of the gaming mouse and `evbit_to_check` is a bitmask representing `EV_KEY` and `EV_REL`, obtained by OR-ing the bitmasks associated with these two event types: `evbit_to_check = (1 << EV_KEY) | (1 << EV_REL) = 0000...000010 | 0000...000100 = 0000...000110`.
+```c
+/* Returns true iff the given device supports keys. */
+int hasKeys(int fd)
+{
+    return hasEventTypes(fd, (1 << EV_KEY));
+}
+```
+Function `hasEventTypes` takes two inputs: the file descriptor of the device and a bitmask representing the event types to be checked. The `ioctl` system call, using the `EVIOCGBIT` macro, populates the `evbit` bitmask, where each bit corresponds to a supported event type by the device. Subsequently, a bitwise AND operation is performed between the `evbit` bitmask (containing all supported event types by the device) and the `evbit_to_check` bitmask (representing the event types to be checked). If the result of this operation exactly matches the `evbit_to_check` bitmask, it indicates that the device supports the specified event types.
+As an example, let's illustrate the function's usage using a file descriptor for a gaming mouse. Suppose the gaming mouse has the `EV_KEY`, `EV_REL`, and `EV_LED` event type bits set, and we want to check if the current device supports `EV_KEY` and `EV_REL` (i.e., it is a gaming mouse). 
+
+1. The hasEventTypes(fd, evbit_to_check) is called with fd being the descriptor of the gaming mouse and `evbit_to_check` is a bitmask representing `EV_KEY` and `EV_REL`, obtained by OR-ing the bitmasks associated with these two event types: `evbit_to_check = (1 << EV_KEY) | (1 << EV_REL) = 0000...000010 | 0000...000100 = 0000...000110`. The left shift operator << moves bit 1 EV_X positions to the left, starting from 0.
 
 2. The `ioctl()` system call retrieves the supported event types and fills the `evbit` bitmask. Only three bits will be high in this bitmask: the second bit for the `EV_KEY` event type (as `EV_KEY` has a constant value of 1), the third bit for the `EV_REL` event type (as `EV_REL` has a constant value of 2), and the eleventh bit for the `EV_LED` event type (as `EV_LED` has a constant value of 11). So, the `evbit` bitmask in binary would be `00000..100000000110`.
 
