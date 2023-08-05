@@ -4,8 +4,8 @@
 <ul>
     <li><a href="#Compiling">Compiling</a></li>
     <li><a href="#Running">Running</a></li>
-    <li><a href="#Finding">Finding keyboard device</a></li>
-    <li><a href="#Reading">Reading events</a></li>
+    <li><a href="#Finding">Looking for keyboard device</a></li>
+    <li><a href="#Reading">Reading keyboard events</a></li>
     <li><a href="#Termination">Termination</a></li>
     <li><a href="#Daemonize">Daemonizing process</a></li>
     <li><a href="#Single">Single instance daemon and file locking</a></li>
@@ -30,17 +30,19 @@ Synopsis:
 Running example (on target machine): <code>./keylogger 127.0.0.1 12345</code><br>
 Running example (on host machine): <code>./server</code>
 
-<H3 id="Finding"> Finding keyboard device </H3>
+<H3 id="Finding"> Looking for keyboard device </H3>
+
 On Unix-based systems, devices are typically found in the `/dev/input` directory. The function `int keyboardFound(char *path, int *keyboard_fd)` is responsible for iterating over all files of `/dev/input/` and its subdirectories to locate the keyboard device. To minimize false positives, the function performs three checks on each file:
 
 1. **Check for keys support**: The device must support keys, as keyboards are expected to have key functionality.
 
 2. **Check for no relative and absolute movement support**: Merely checking if the device supports keys might not be sufficient, as other devices like gaming mice and joysticks also have keys.
 
-3. **Check for common keyboard keys support**: Although the first two checks help filter potential keyboards, there may still be false positives. For example, the power button is a device that supports keys, doesn't have relative and absolute movement support, but only has one key setting. To conclusively verify that the device is indeed a keyboard, a function examines whether it supports some common keyboard keys. A selection of twelve commonly used keys, such as 'KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC', is used for this purpose.
+3. **Check for common keyboard keys support**: Although the first two checks help filter potential keyboards, there may still be false positives. For example, the power button is a device that supports keys, doesn't have relative and absolute movement support, but only has one key setting. To conclusively verify that the device is indeed a keyboard, a function examines whether it supports some common keyboard keys. A selection of twelve commonly used keys, such as *'KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC'*, is used for this purpose.
 
-<H3 id="Reading"> Reading events </H3>
-To retrieve events from a device, you need to use the standard character device "read" function. Each time you read from an event device, you will receive a set of events. Each event is represented by a struct input_event. If you want to learn more about the fields in the input_event structure, you can refer to the documentation at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
+<H3 id="Reading"> Reading keyboard events </H3>
+
+To retrieve events from a device, you need to use the standard character device "read" function. Each time you read from an event device, you will receive a set of events. Each event is represented by a `struct input_event`. If you want to learn more about the fields in the input_event structure, you can refer to the documentation at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
 ```c
 struct input_event {
       struct timeval time;
