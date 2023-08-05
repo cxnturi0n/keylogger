@@ -40,6 +40,22 @@ On Unix-based systems, devices are typically found in the `/dev/input` directory
 
 3. **Check for common keyboard keys support**: Although the first two checks help filter potential keyboards, there may still be false positives. For example, the power button is a device that supports keys, doesn't have relative and absolute movement support, but only has one key setting. To conclusively verify that the device is indeed a keyboard, a function examines whether it supports some common keyboard keys. A selection of twelve commonly used keys, such as *'KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC'*, is used for this purpose.
 
+To do so the *event API (`EVIOC* functions`)*, which will allow us to query the capabilities and characteristics of an input device. The following function uses the linux event API to check whether or not an input device support keys:
+```c
+int hasKeys(int fd)
+{
+    unsigned long evbit = 0;
+
+    /* Get the bit field of available event types. */
+    ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
+
+    /* Check if EV_KEY is set. */
+    return (evbit & (1 << EV_KEY));
+}
+```
+The ioctl system call, along with the EVIOCGBIT macro, populates the evbit bitmask, where each bit corresponds to a specific event type. Eventually, a bitwise AND operation is performed between this bitmask, containing all supported event types, and the bitmask associated with the EV_KEY event type. If the result is exactly EV_KEY (or any non-zero value), it indicates that the device supports key events.
+For example, let's consider using this function on a file descriptor for a gaming mouse that has both EV_KEY and EV_REL event type bits set. The ioctl() system call will fill the event bitmask, and only two bits will be high: the second bit for the EV_KEY event type (as EV_KEY has a constant value of 1), and the third bit for the EV_REL event type (as EV_REL has a constant value of 2). So, the evbit in binary would be 00000....00110.
+At this point, the bitwise AND operation is performed between evbit and the bitmask representing EV_KEY, which is 00000...000010. The result is, of course, EV_KEY itself. This indicates that the device supports key events since the EV_KEY bit is set in the evbit bitmask.
 <H3 id="Reading"> Reading keyboard events </H3>
 
 To retrieve events from a device, you need to use the standard character device "read" function. Each time you read from an event device, you will receive a set of events. Each event is represented by a `struct input_event`. If you want to learn more about the fields in the input_event structure, you can refer to the documentation at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
