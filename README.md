@@ -22,7 +22,7 @@ make
 Synopsis:
  <code><b>./keylogger</b> <b>host</b> <b>port</b></code>
 <ul>
-  <li><b>host</b>: server hostname or ip address</li>
+  <li><b>host</b>: server hostname or ipv4 address</li>
   <li><b>port</b>: server port</li> 
 </ul>
 Running example (on target machine): <code>sudo ./keylogger 127.0.0.1 12345</code><br>
