@@ -30,7 +30,7 @@ Running example (on host machine): <code>./server</code>
 
 <H3 id="Finding"> Looking for keyboard device </H3>
 
-On Unix-based systems, devices are typically found in the `/dev/input` directory. The function `int keyboardFound(char *path, int *keyboard_fd)` is responsible for iterating over all files of `/dev/input/` and its subdirectories to locate the keyboard device. To minimize false positives, the function performs three checks on each file:
+On Unix-based systems, devices are typically found in the `/dev/input.` directory. The function `int keyboardFound(char *path, int *keyboard_fd)` is responsible for iterating over all files of `/dev/input/` and its subdirectories to locate the keyboard device. To minimize false positives, the function performs three checks on each file:
 
 1. **Check for keys support**: The device must support keys, as keyboards are expected to have key functionality.
 
@@ -38,7 +38,7 @@ On Unix-based systems, devices are typically found in the `/dev/input` directory
 
 3. **Check for common keyboard keys support**: Although the first two checks help filter potential keyboards, there may still be false positives. For example, the power button is a device that supports keys, doesn't have relative and absolute movement support, but only has one key setting. To conclusively verify that the device is indeed a keyboard, a function examines whether it supports some common keyboard keys. A selection of twelve commonly used keys, such as *'KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_BACKSPACE, KEY_ENTER, KEY_0, KEY_1, KEY_2, KEY_ESC'*, is used for this purpose.
 
-To do so the *event API (`EVIOC* functions`)*, which will allow us to query the capabilities and characteristics of an input device. The following function uses the linux event API to check whether or not an input device support specific input eventsd:
+To do so the *event API (`EVIOC* functions`)* is used and will allow us to query the capabilities and characteristics of an input device. The following function uses the linux event API to check whether or not an input device support specific input events:
 ```c
 int hasEventTypes(int fd, unsigned long evbit_to_check)
 {
