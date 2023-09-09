@@ -30,7 +30,7 @@ Running example (on host machine): <code>./server</code>
 
 <H3 id="Finding"> Looking for keyboard device </H3>
 
-On Unix-based systems, devices are typically found in the `/dev/input/` directory. The function `int keyboardFound(char *path, int *keyboard_fd)` is responsible for iterating over all files of `/dev/input/` and its subdirectories to locate the keyboard device. To minimize false positives, the function performs three checks on each file:
+On Unix-based systems, devices are typically found in the `/dev/input/` directory. The function `int keyboardFound(char *path, int *keyboard_fd)` located in [keylogger.c](/keylogger.c) is responsible for iterating over all files of `/dev/input/` and its subdirectories to locate the keyboard device. To minimize false positives, the function performs three checks on each file:
 
 1. **Check for keys support**: The device must support keys, as keyboards are expected to have key functionality.
 
