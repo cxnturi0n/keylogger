@@ -1,6 +1,6 @@
 <H2> Table of contents </H2>
 <ul>
-    <li><a href="#Compiling">Compiling</a></li>
+    <li><a href="#-compiling-">Compiling</a></li>
     <li><a href="#Running">Running</a></li>
     <li><a href="#Finding">Looking for keyboard device</a></li>
     <li><a href="#Reading">Reading keyboard events</a></li>
